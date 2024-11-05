@@ -1,0 +1,52 @@
+@startuml
+skinparam backgroundcolor white
+skinparam defaultTextAlignment center
+
+skinparam ArrowColor black
+skinparam artifact {
+  backgroundcolor #e8f5fd
+  bordercolor #5FB8EC
+}
+skinparam node {
+  bordercolor #5FB8EC
+}
+skinparam database {
+  bordercolor #5FB8EC
+}
+
+left to right direction
+
+node "Odjemalski\nračunalnik" as Client <<device>> {
+  node "Spletni\nbrskalnik" <<device>> {
+  	artifact "Angular\naplikacija" <<artifact>>
+  }
+}
+
+node "Spletni\nstrežnik" as Server <<device>> {
+  artifact "NodeJS\naplikacija" as Index <<artifact>>
+}
+
+database "Centralni register\n prebivalstva" as CRP <<device>> {
+  artifact "Relacijska\npodatkovna\nbaza" AS RelCRP <<artifact>>
+}
+database "Evidenca\n volilne pravice" as EVP <<device>> {
+  artifact "Relacijska\npodatkovna\nbaza" AS RelEVP <<artifact>>
+}
+
+database "Distribuirana\npodatkovna\nbaza" as DPB <<device>> {
+  artifact "Pametna\npogodba" AS SmartContract <<artifact>>
+}
+database "Transakcijska\npodatkovna\nbaza" as TPB <<device>> {
+  artifact "Relacijska\npodatkovna\nbaza" AS RelTPB <<artifact>>
+}
+database "Revizijska\npodatkovna\nbaza" as RPB <<device>> {
+  artifact "Relacijska\npodatkovna\nbaza" AS RelRPB <<artifact>>
+}
+
+Server -left-> CRP
+Server -right-> EVP
+Client -up-> Server
+Server -up-> DPB
+Server -up-> TPB
+Server -up-> RPB
+@enduml

@@ -1,0 +1,212 @@
+@startuml Organizacija in uporabniki
+skinparam groupInheritance 2
+skinparam class {
+  borderColor #5FB8EC
+  arrowColor black
+}
+
+hide circle
+skinparam class<<boundary>> {
+  backgroundColor #f2fce8
+  borderColor #4d8712
+}
+skinparam class<<control>> {
+  backgroundColor #fce8e8
+  borderColor #9e1515
+}
+skinparam class<<entity>> {
+  backgroundColor #e8f5fc
+}
+
+class PrijavaUIGView << boundary >> {
+  -uporabnisko_ime: string
+  -geslo: string
+  -TOTP: int
+  --
+  +poizkusPrijave(uporabnisko_ime: string, geslo: string) : int
+  'Ob pravilno vnešenem uporabnisko_ime in geslo prijavi preizkusPrijave() vrne uporabnik_id, sicer pa (negativno) kodo napake; sledi:
+  +sporocanjeTOTP(uporabnik_id: int, TOTP: int) : string
+  'Če smo vnesli pravilen TOTP se nam vrne sejni žeton (string), da smo lahko še naprej prijavljeni
+}
+
+class PrijavaCertifikatStrojniZetonView << boundary >> {
+  'EŠEI pridobimo iz certifikata oz. strojenga žetona
+  -EŠEI: string
+  -privatni_kljuc: string
+  -izziv: string
+  -odgovor: string
+  --
+  'Challenge-response / izziv-odgovor arhitektura avtentikacije
+  +pridobiIdUporabnika(EŠEI: int) : int
+  +pridobiIzziv(uporabnik_id: int) : string
+  'Odgovor se izračuna lokalno:
+  +izracunajOdgovor(izziv: string, privatni_kljuc: string) : string
+  +posljiOdgovor(uporabnik_id: int, odgovor: string): string
+  'Če smo poslali pravilen odgovor, se nam vrne sejni žeton (string), da smo lahko še naprej prijavljeni
+  +prijava(certifikat/hardware token: string)
+}
+
+class AvtentikacijaController << control >> {
+  --
+  +pridobiPodatke(uporabnik_id: int) : Uporabnik
+
+  +pridobiIdUporabnikaIzUpIme(uporabnisko_ime: string) : int
+  +preveriUjemanjeGesel(uporabnik_id: int, poslano_geslo: string) : bool
+  '+posredujIdUporabnika()
+  +preveriVeljavnostTOTP(uporabnik_id: int, TOTP: int) : bool
+  +preveriHardwareToken(uporabnik_id: int, hardware token: string)
+  +preveriHardwareToken(uporabnik_id: int, certifikat: string)
+
+  +pridobiIdUporabnikaIzEŠEI(EŠEI: string) : int
+  +generirajizziv() : string
+  +preveriUjemanjeOdgovoraIzziv(javni_kljuc: string, izziv: string, odgovor: string) : bool
+
+  +generirajSejniŽeton() : string
+  +odjava(uporabnik_id: int)
+}
+
+class RegistracijaView << boundary >> {
+  -ime: string
+  -priimek: string
+  -EŠEI: int
+  -uporabnisko_ime: string
+  -geslo: string
+  -vloga: string
+  'Za razliko od ostalih podatkov, TOTP seme prejmemo od RegistracijaController, ki ga tudi zgenerira
+  -TOTP_seme: string
+  --
+  'Če je registracija() uspešna vrne uporabnik_id, sicer vrne (negativno) kodo napake
+  +sporociPodatkeUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, geslo: string, vloga:string) : int
+  +pridobiTOTPSeme(uporabnik_id: int): string
+}
+
+class RegistracijaController << control >> {
+  --
+  +generirajTOTPSeme() : string
+  +posredujTOTPSemeUpravljalcu(): string
+  'Iz zunanjega vira (ni prikazan) pridobi javni_kljuc za trenutno aktiven certifikat povezan s podanim EŠEI
+  +pridobiJavniKljuc(EŠEI: string) : string
+  +registrirajUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, vloga:string, geslo: string, TOTP_seme: string; javni_kljuc: string) : int
+  'Novo registrirani uporabiki so privzeto aktivirani
+}
+
+class PrikaziUporabnikaView << boundary >> {
+  -uporabnik_id: int 
+  -EŠEI: int
+  -uporabnisko_ime
+  -ime: string
+  -priimek: string
+  -vloga: string
+  -aktiviran: bool
+  -soljena_zgostitev_gesla: string
+  -javni_kljuc: string
+  -TOTP_seme: string
+  --
+  +pridobiPodatke(uporabnik_id: int) : Uporabnik
+
+  +nastaviEŠEI(uporabnik_id: int, EŠEI: int) : bool
+  +nastaviImeInPriimek(uporabnik_id: int, ime: string, priimek: string) : bool
+  +nastaviUporabniskoIme(uporabnik_id: int, uporabnisko_ime: string) : bool
+  +nastaviVlogo(uporabnik_id: int, vloga: string) : bool
+  +preizkusAktiviranostiUporabnika(uporabnik_id: int) : bool
+  +deaktivirajUporabnika(uporabnik_id: int) : bool
+  +aktivirajUporabnika(uporabnik_id: int) : bool
+
+  +nastaviSoljenoZgostitevGesla(uporabnik_id, soljena_zgostitev_gesla: string) : bool
+  +nastaviTOTPSeme(uporabnik_id: int, TOTP_seme: string) : bool
+  +nastaviJavniKljuc(uporabnik_id: int, javni_kljuc: string) : bool
+  +izbrisiUporabnika(uporabnik_id: int) : bool
+}
+
+class UpravljanjeUporabnikovController << control >> {
+  --
+  +pridobiPodatke(uporabnik_id: int) : Uporabnik
+
+  +nastaviEŠEI(uporabnik_id: int, EŠEI: int) : bool
+  +nastaviImeInPriimek(uporabnik_id: int, ime: string, priimek: string) : bool
+  +nastaviUporabniskoIme(uporabnik_id: int, uporabnisko_ime: string) : bool
+  +nastaviVlogo(uporabnik_id: int, vloga: string) : bool
+  +preizkusAktiviranostiUporabnika(uporabnik_id: int) : bool
+  +deaktivirajUporabnika(uporabnik_id: int) : bool
+  +aktivirajUporabnika(uporabnik_id: int) : bool
+
+  +nastaviSoljenoZgostitevGesla(uporabnik_id, soljena_zgostitev_gesla: string) : bool
+  +nastaviTOTPSeme(uporabnik_id: int, TOTP_seme: string) : bool
+  +nastaviJavniKljuc(uporabnik_id: int, javni_kljuc: string) : bool
+  +izbrisiUporabnika(uporabnik_id: int) : bool
+}
+
+class RegistriranUporabnik << entity >> {
+  -uporabnik_id: int 
+  'Enotna številka elektronske identifikacije (EŠEI) je vgrajena v sam certifikat in je zunanji identifikator za alokacijo osebe
+  -EŠEI: int
+  -uporabnisko_ime
+  -ime: string
+  -priimek: string
+  -vloga: string
+  -aktiviran: bool
+  
+  'Glede na način avtentikacije:
+  -soljena_zgostitev_gesla: string
+  -TOTP_seme: string
+  -javni_kljuc: string
+  
+  +ustvariUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, vloga:string, geslo: string, TOTP_seme: string; javni_kljuc: string) : bool
+  
+  +pridobiIdUporabnikaIzUpIme(uporabnisko_ime: string) : int
+  +pridobiIdUporabnikaIzEŠEI(EŠEI: string) : int
+  +vrniUporabnika(uporabnik_id: int) : Uporabnik
+  
+  +nastaviEŠEI(uporabnik_id: int, EŠEI: int) : bool
+  +nastaviImeInPriimek(uporabnik_id: int, ime: string, priimek: string) : bool
+  +nastaviUporabniskoIme(uporabnik_id: int, uporabnisko_ime: string) : bool
+  
+  +nastaviVlogo(uporabnik_id: int, vloga: string) : bool
+  'Aktivacija in deaktivacija uporabnika:
+  +preizkusAktiviranostiUporabnika(uporabnik_id: int) : bool
+  +deaktivirajUporabnika(uporabnik_id: int) : bool
+  +aktivirajUporabnika(uporabnik_id: int) : bool
+
+  +nastaviSoljenoZgostitevGesla(uporabnik_id, soljena_zgostitev_gesla: string) : bool
+  +nastaviTOTPSeme(uporabnik_id: int, TOTP_seme: string) : bool
+  +nastaviJavniKljuc(uporabnik_id: int, javni_kljuc: string) : bool
+  
+  +izbrisiUporabnika(uporabnik_id: int) : bool
+}
+
+class NeprijavljenUporabnik << entity >> {
+
+}
+
+class Administrator << entity >> {
+    +vrniSeznamClanovDVK(vloga: string) : Uporabnik[]
+}
+
+class ClanDVK << entity >> {
+    +vrniSeznamClanovOVK(vloga: string) : Uporabnik[]
+}
+
+class ClanOVK << entity >> {
+    +vrniSeznamClanovVOpodOVK(vloga: string) : Uporabnik[]
+}
+
+class ClanVO << entity >> {
+}
+
+class OpazovalecGlasovanja << entity >> {
+}
+
+PrijavaUIGView --> AvtentikacijaController
+PrijavaCertifikatStrojniZetonView --> AvtentikacijaController
+AvtentikacijaController --> RegistriranUporabnik
+RegistracijaView --> RegistracijaController
+RegistracijaController --> RegistriranUporabnik
+PrikaziUporabnikaView --> UpravljanjeUporabnikovController
+UpravljanjeUporabnikovController --> RegistriranUporabnik
+
+RegistriranUporabnik <|-- Administrator
+RegistriranUporabnik <|-- ClanDVK
+RegistriranUporabnik <|-- ClanOVK
+RegistriranUporabnik <|-- ClanVO
+RegistriranUporabnik <|-- OpazovalecGlasovanja
+@enduml

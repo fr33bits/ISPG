@@ -1,0 +1,168 @@
+@startuml Glasovanja in volišča
+hide circle
+skinparam class {
+  arrowColor black
+}
+skinparam class<<boundary>> {
+  backgroundColor #f2fce8
+  borderColor #4d8712
+}
+skinparam class<<control>> {
+  backgroundColor #fce8e8
+  borderColor #9e1515
+}
+skinparam class<<entity>> {
+  backgroundColor #e8f5fc
+  borderColor #5FB8EC
+}
+
+class Glasovanje << entity >> {
+  -glasovanje_id: int
+  -ime: string
+  -vrsta_glasovanja_id: int
+  -zacetek_osebno: datetime
+  -konec_osebno: datetime
+  -zacetek_postno_zahtev: datetime
+  -konec_postno_zahteva: datetime
+  -zacetek_postno_procesiranje: datetime
+  -konec_postno_procesiranje: datetime
+  -zacetek_osebno_mobilno_prijava: datetime
+  -koncec_osebno_mobilno_prijava: datetime
+  -volisca_ids: int[]
+  --
+  +vpis(glasovanje_id: int, ime: string, vrsta_glasovanja_id: int, vrsta_glasovanja_id: int, zacetek_osebno: datetime, konec_osebno: datetime,
+  zacetek_postno_zahtev: datetime, konec_postno_zahteva: datetime,zacetek_postno_procesiranje: datetime, konec_postno_procesiranje: datetime,
+  zacetek_osebno_mobilno_prijava: datetime,koncec_osebno_mobilno_prijava: datetime, volisca_ids: int[]): int
+  +pridobi(glasovanje_id: int): Glasovanje
+  +spremeniIme(glasovanje_id: int, ime: string): int
+  +spremeniVrsto(glasovanje_id: int, vrsta_glasovanja_id: int): int
+  +spremeniCas(glasovanje_id: int, nacin_glasovanja: string, zacetek: datetime, konec: datetime): int
+  +podaljsajCas(glasovanje_id: int, nacin_glasovanja: string, konec: datetime): int
+  +koncaj(glasovanje_id: int): int
+  +dodajVolisca(glasovanje_id: int, dodana_volisca_ids: int[]) int
+  +odstraniVolisca(glasovanje_id: int, odstranjena_volisca_ids: int[]) int
+  +izbrisi(glasovanje_id: int): int
+}
+
+class VrstaGlasovanja << entity >> {
+  -vrsta_glasovanja_id: int
+  'Tipa glasovanja: volitve, referendumi
+  -tip_glasovanja: string
+  -nivo_oblasti: string
+  -st_krogov: int
+  --
+  +vpis(vrsta_glasovanja_id: int, tip_glasovanja: string, nivo_oblasti: string, st_krogov: int): int
+  +pridobi(vrsta_glasovanja_id: int): VrstaGlasovanja
+  +izbris(vrsta_glasovanja_id: int): int
+}
+
+class GlasovanjaController << control >> {
+  -glasovanje_id: int
+  -ime: string
+  -vrsta_glasovanja_id: int
+  -zacetek_osebno: datetime
+  -konec_osebno: datetime
+  -zacetek_postno_zahtev: datetime
+  -konec_postno_zahteva: datetime
+  -zacetek_postno_procesiranje: datetime
+  -konec_postno_procesiranje: datetime
+  -zacetek_osebno_mobilno_prijava: datetime
+  -koncec_osebno_mobilno_prijava: datetime
+  -volisca_ids: int[]
+  --
+  +vpisGlasovanja(glasovanje_id: int, ime: string, vrsta_glasovanja_id: int, vrsta_glasovanja_id: int, zacetek_osebno: datetime, konec_osebno: datetime,
+  zacetek_postno_zahtev: datetime, konec_postno_zahteva: datetime,zacetek_postno_procesiranje: datetime, konec_postno_procesiranje: datetime,
+  zacetek_osebno_mobilno_prijava: datetime,koncec_osebno_mobilno_prijava: datetime, volisca_ids: int[]): int
+  +pridobiGlasovanje(glasovanje_id: int): Glasovanje
+  +spremeniImeGlasovanja(glasovanje_id: int, ime: string): int
+  +spremeniVrstoGlasovanja(glasovanje_id: int, vrsta_glasovanja_id: int): int
+  +spremeniCasGlasovanja(glasovanje_id: int, nacin_glasovanja: string, zacetek: datetime, konec: datetime): int
+  +podaljsajCasGlasovanja(glasovanje_id: int, nacin_glasovanja: string, konec: datetime): int
+  +koncajGlasovanje(glasovanje_id: int): int
+  +dodajVoliscaGlasovanju(glasovanje_id: int, dodana_volisca_ids: int[]) int
+  +odstraniVoliscaGlasovanju(glasovanje_id: int, odstranjena_volisca_ids: int[]) int
+  +izbrisiGlasovanja(glasovanje_id: int): int
+
+  +vpisVrsteGlasovanja(vrsta_glasovanja_id: int, tip_glasovanja: string, nivo_oblasti: string, st_krogov: int): int
+  +pridobiVrstoGlasovanja(vrsta_glasovanja_id: int): VrstaGlasovanja
+  +izbrisVrsteGlasovanja(vrsta_glasovanja_id: int): int
+
+  +izbrisiVolilniImenik(glasovanje_id: int)
+  +avtomatskoBrisiVolilneImenike(dni_po_koncu_glasovanja: int): int
+}
+
+class VolilniImenikController << control >> {
+}
+
+class GlasovanjaView << boundary >> {
+  -glasovanje_id: int
+  -ime: string
+  -vrsta_glasovanja_id: int
+  -zacetek_osebno: datetime
+  -konec_osebno: datetime
+  -zacetek_postno_zahtev: datetime
+  -konec_postno_zahteva: datetime
+  -zacetek_postno_procesiranje: datetime
+  -konec_postno_procesiranje: datetime
+  -zacetek_osebno_mobilno_prijava: datetime
+  -koncec_osebno_mobilno_prijava: datetime
+  -volisca_ids: int[]
+  --
+  +vpisGlasovanja(glasovanje_id: int, ime: string, vrsta_glasovanja_id: int, vrsta_glasovanja_id: int, zacetek_osebno: datetime, konec_osebno: datetime,
+  zacetek_postno_zahtev: datetime, konec_postno_zahteva: datetime,zacetek_postno_procesiranje: datetime, konec_postno_procesiranje: datetime,
+  zacetek_osebno_mobilno_prijava: datetime,koncec_osebno_mobilno_prijava: datetime, volisca_ids: int[]): int
+  +pridobiGlasovanje(glasovanje_id: int): Glasovanje
+  +spremeniImeGlasovanja(glasovanje_id: int, ime: string): int
+  +spremeniVrstoGlasovanja(glasovanje_id: int, vrsta_glasovanja_id: int): int
+  +spremeniCasGlasovanja(glasovanje_id: int, nacin_glasovanja: string, zacetek: datetime, konec: datetime): int
+  +podaljsajCasGlasovanja(glasovanje_id: int, nacin_glasovanja: string, konec: datetime): int
+  +koncajGlasovanje(glasovanje_id: int): int
+  +dodajVoliscaGlasovanju(glasovanje_id: int, dodana_volisca_ids: int[]) int
+  +odstraniVoliscaGlasovanju(glasovanje_id: int, odstranjena_volisca_ids: int[]) int
+  +izbrisiGlasovanja(glasovanje_id: int): int
+
+  +vpisVrsteGlasovanja(vrsta_glasovanja_id: int, tip_glasovanja: string, nivo_oblasti: string, st_krogov: int): int
+  +pridobiVrstoGlasovanja(vrsta_glasovanja_id: int): VrstaGlasovanja
+  +izbrisVrsteGlasovanja(vrsta_glasovanja_id: int): int
+
+  +izbrisiVolilniImenik(glasovanje_id: int)
+  +avtomatskoBrisiVolilneImenike(dni_po_koncu_glasovanja: int): int
+}
+
+class Volisce << entity >> {
+  -volisce_id: int
+  'Vrsti glasovanja: fiskno, mobilno
+  -vrsta_volisca: string
+  -intervali_odprtja: datetime[][]
+  -vpisnicarji_ids: int[]
+  'Nima naslova ali drugih podatkov, ker se te vodijo v zunanjih evidencah
+  --
+  +vpis(volisce_id: int, vrsta_volisca: string, intervali_odprtja: datetime[][], vpisnicarji_ids: int[]): int
+  +pridobi(volisce_id: int): Volisce
+  +izbirs(volisce_id: int): int
+}
+
+class VoliscaController << control >> {
+  +vpis(volisce_id: int, vrsta_volisca: string, intervali_odprtja: datetime[][], vpisnicarji_ids: int[]): int
+  +pridobi(volisce_id: int): Volisce
+  +izbirs(volisce_id: int): int
+}
+
+class VoliscaView << boundary >> {
+  +vpis(volisce_id: int, vrsta_volisca: string, intervali_odprtja: datetime[][],vpisnicarji_ids: int[]): int
+  +pridobi(volisce_id: int): Volisce
+  +izbirs(volisce_id: int): int
+}
+
+GlasovanjaView "1..1" --> "0..1" GlasovanjaController
+GlasovanjaController "1..1" -right-> "1..1" VolilniImenikController
+GlasovanjaController "0..*" --> "1..1" Glasovanje
+GlasovanjaController "0..*" --> "1..1" VrstaGlasovanja
+Glasovanje "1..1"--- "0..*" VrstaGlasovanja
+
+VoliscaView "1..1" --> "0..1" VoliscaController
+VoliscaController "1..1" --> "1..1" Volisce
+
+Glasovanje "0..*" --- "1..*" Volisce
+
+@enduml

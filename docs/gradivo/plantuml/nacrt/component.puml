@@ -1,0 +1,167 @@
+@startuml Komponenti diagram
+skinparam backgroundcolor white
+skinparam defaultTextAlignment center
+skinparam ArrowColor black
+skinparam component {
+  backgroundcolor #e8f5fd
+  backgroundcolor<<subsystem>> white
+  bordercolor #5FB8EC
+}
+skinparam interface {
+  backgroundcolor #e8f5fd
+  bordercolor #5FB8EC
+}
+skinparam linetype ortho
+
+left to right direction
+
+component "Aplikacija za prikaz rezultatov glasovanja" <<system>> as AplikacijaPrikazRezultatov
+
+component "Register fizičnih oseb" <<system>> {
+	component "Relacijska podatkovna baza" <<component>> as RelRFO
+}
+interface "Iskanje volilca" as IskanjeVolilca
+RelRFO --> IskanjeVolilca
+interface "Pridobitev podatkov o volilcu" as PridobitevPodatkovOVolilcu
+RelRFO --> PridobitevPodatkovOVolilcu
+
+component "Evidenca volilne pravice" <<system>> {
+	component "Poslovna logika za preverjanje volilne pravice" <<component>> as RelEVP
+}
+interface "Pridobitev seznama volitev \n za katere ima volilec volilno pravico" as PridobitevSeznamaVolitevZaVolilca
+RelEVP --> PridobitevSeznamaVolitevZaVolilca
+
+component "Poštne storitve" <<system>> {
+	component "Sistem za naročila" <<component>> as SistemNarocila
+}
+interface "Vmesnik za sprejetje pošilnih nalogov" as VmesnikSprejetjePosilnihNalogov
+
+component "eUprava" <<system>> {
+	component "Vpogled v lastne podatke v volilnih imenikih" <<component>> as VpogledLastniVolilniImeniki
+    component "Prijava na glasovanje po pošti" <<component>> as PrijavaGlasovanjePoPosti
+}
+
+() "Uporabniški vmesnik za ročen vpis podatkov volilca" <<interface>> as UVRocenVpisPodatkovVolilca
+() "Čitalec osebnih dokumentov" <<interface>> as CitalecDokumentov
+() "Čitalec strojnega žetona" <<interface>> as CitalecStrojnegaZetona
+() "Uporabniški vmesnik za vnos gesla in TOTP" <<interface>> as UVGesloTOTP
+() "Izbirnik certifikata" <<interface>> as IzbirnikCertifikata
+
+component "Sistem za podporo glasovanju" <<system>> as SistemPodporaGlasovanje {
+  component "Identitetne storitve" <<subsystem>> as Organizacija {
+    '------Lahko bi bile tudi zunanje komponente:-------
+    component "Upravljalec identitet" <<component>> as UpravljalecIdentitet
+    component "Avtentikacija uporabnikov" <<component>> as AvtentikacijaUporabnikov
+    CitalecStrojnegaZetona --> AvtentikacijaUporabnikov
+    UVGesloTOTP --> AvtentikacijaUporabnikov
+    IzbirnikCertifikata --> AvtentikacijaUporabnikov
+  }
+
+  component "Šifranti" <<subsystem>> as Sifranti {
+    component "Upravljanje šifranta glasovanj" <<component>> as UpravljanjeVolitev
+    component "Upravljanje šifranta volišč" <<component>> as UpravljanjeSifrantaVolisc
+    '----------------------------------------------------
+  }
+
+  component "Preizkus upravičenosti glasovanja" <<component>> as PreizkusUpravicenostiGlasovanja
+
+  component "Naročilo glasovanja po pošti" <<component>> as SistemPosiljanje
+
+  component "Procesiranje volilnega materiala prejetega po pošti" <<subsystem>> as ProcesiranjeVolilnegaMaterialaPosta {
+      component "Identifikacija in avtentikacija volilca" <<component>> as IdentifikacijaAvtentikacijaVolilcaPosta
+      component "Identifikacija volitev" <<component>> as IdentifikacijaVolitev
+  }
+
+  component "Procesiranje volilcev na volišču" <<subsystem>> as ProcesiranjeVolilnegaMateraialPosta {
+    component "Identifikacija in avtentikacija volilca na volišču" <<subsystem>> as IdentifikacijaAvtentikacijaVolilcaVolisce {
+      component "Branje podatkov iz osebnega dokumenta" <<component>> as BranjePodatkovOsebnegaDokumenta
+      CitalecDokumentov --> BranjePodatkovOsebnegaDokumenta
+      component "Ročno iskanje volilca" <<component>> as RocnoIskanjeVolilca
+      UVRocenVpisPodatkovVolilca --> RocnoIskanjeVolilca
+      IskanjeVolilca )--> RocnoIskanjeVolilca
+      
+      interface "Identificiran volilec" as IdentificiranVolilec
+      RocnoIskanjeVolilca --> IdentificiranVolilec
+      BranjePodatkovOsebnegaDokumenta --> IdentificiranVolilec
+      component "Prikaz podatkov o volilcu" <<component>> as PrikazPodatkovVolilca
+      IdentificiranVolilec --> PrikazPodatkovVolilca
+      PridobitevPodatkovOVolilcu )--> PrikazPodatkovVolilca
+    }
+
+    component "Izbira volitev" <<component>> as IzbiraVolitev
+
+    interface "Identificiran in avtenticiran volilec" as AVPodatkiVolilec
+  }
+
+  interface "Izbran volilec in volitve" as IzbranVolilecVolitveZaVpis
+  component "Vpis udeležbe" <<subsystem>> as VpisUdelezbe {
+    component "Podpis" <<component>> as Podpis
+    'Je po pošti sploh možno podpisovati? Ta komponenta je eksluzivna za glasovanje v živo
+  }
+  IzbiraVolitev --> IzbranVolilecVolitveZaVpis
+  ProcesiranjeVolilnegaMaterialaPosta --> IzbranVolilecVolitveZaVpis
+  IzbranVolilecVolitveZaVpis )--> VpisUdelezbe
+
+  component "Volilni imeniki" <<subsystem>> as VolilniImeniki {
+    component "Register udežbe" <<component>> as RegisterUdelezbe
+    component "Register poslanih glasovnic" <<component>> as RegisterPoslanihGlasovnic
+  }
+  interface "Vpis v register poslanih glasovnic" as VpisRegisterPoslanihGlasovnic
+  interface "Vpis v register udeležbe" as VpisRegisterUdelezbe
+  interface "Preverjanje neudeležbe specifičnega volilca na specifičnih volitvah" as PreverjanjeNeudelezbe
+  interface "Preizkus že poslanega volilnega materiala" as ZePoslanVolilniMaterial
+}
+interface "Aplikacijski vmesnik za vpogled v volilni imenik za specifičnega volilca" as AVSpecificenVpogled
+interface "Aplikacijski vmesnik za splošen vpogled v volilni imenik" as AVSplosenVpogled
+AVSplosenVpogled --> AplikacijaPrikazRezultatov
+interface "Aplikacijski vmesnik za naročilo pošiljanja volilnega materiala" as AVPosiljanje
+interface "Seznam volitev na katerih lahko volilec glasuje" as SeznamVolitevLahkoGlasuje
+
+interface "Sistem za elektronsko podpisovanje" as SistemElektronskiPodpis
+interface "Sistem za digitalno podpisovanje" as SistemDigitalniPodpis
+Podpis --> SistemElektronskiPodpis
+Podpis --> SistemDigitalniPodpis
+
+interface "Uporabniški vmesnik za naročilo pošiljanja volilnega materiala za UE" as UVPosiljanje
+interface "Uporabniški vmesnik za vpogled v volilni imenik za specifičnega volilca" as UVSpecificenVpogled
+
+'Ta del sistema ni potreben, saj splošen vpogled v volilni imenik podpira že aplikacija za prikaz rezultatov!!!
+interface "Uporabniški vmesnik za splošen vpogled v volilni imenik" as UVSplosenVpogled
+VolilniImeniki --> UVSplosenVpogled
+
+'------------POVEZAVE----------------------
+
+RegisterPoslanihGlasovnic --> VpisRegisterPoslanihGlasovnic
+VpisRegisterPoslanihGlasovnic )--> SistemPosiljanje
+
+RegisterUdelezbe --> PreverjanjeNeudelezbe
+PreverjanjeNeudelezbe )--> PreizkusUpravicenostiGlasovanja
+PridobitevSeznamaVolitevZaVolilca )--> PreizkusUpravicenostiGlasovanja
+
+PreizkusUpravicenostiGlasovanja --> SeznamVolitevLahkoGlasuje
+SeznamVolitevLahkoGlasuje )--> VpisUdelezbe
+SeznamVolitevLahkoGlasuje )--> SistemPosiljanje
+SeznamVolitevLahkoGlasuje )--> IzbiraVolitev
+SeznamVolitevLahkoGlasuje )--> PrijavaGlasovanjePoPosti
+
+VolilniImeniki --> AVSplosenVpogled
+VolilniImeniki --> AVSpecificenVpogled
+AVSpecificenVpogled )--> VpogledLastniVolilniImeniki
+VolilniImeniki --> UVSpecificenVpogled
+
+RegisterPoslanihGlasovnic --> ZePoslanVolilniMaterial
+ZePoslanVolilniMaterial )--> SistemPosiljanje
+
+SistemPosiljanje --> UVPosiljanje
+SistemPosiljanje --> AVPosiljanje
+AVPosiljanje )--> PrijavaGlasovanjePoPosti
+
+PrikazPodatkovVolilca --> AVPodatkiVolilec
+AVPodatkiVolilec )--> IzbiraVolitev
+
+RegisterUdelezbe --> VpisRegisterUdelezbe
+VpisRegisterUdelezbe )--> VpisUdelezbe
+
+SistemNarocila --> VmesnikSprejetjePosilnihNalogov
+VmesnikSprejetjePosilnihNalogov )--> SistemPosiljanje
+@enduml

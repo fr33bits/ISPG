@@ -1,0 +1,67 @@
+@startuml Volilec
+skinparam groupInheritance 2
+skinparam class {
+  borderColor #5FB8EC
+  arrowColor black
+}
+
+hide circle
+skinparam class<<boundary>> {
+  backgroundColor #f2fce8
+  borderColor #4d8712
+}
+skinparam class<<control>> {
+  backgroundColor #fce8e8
+  borderColor #9e1515
+}
+skinparam class<<entity>> {
+  backgroundColor #e8f5fc
+}
+
+class Volilec << entity >> {
+  -volilec_id: int
+  -ime: string
+  -priimek: string
+  -slika: blob
+}
+
+class VolilciController << control >> {
+  +pridobiPodatkeVolilca(volilec_id: int): Volilec
+  +pridobiIdFVolilca(ime: string, priimek: string, spol: char, prebivalisce_naslov: string, drzavljanstvo_ids: int[], rojstvo_datum: date, EMSO: int, davcna_stevilka: int): int
+  +preveriAvtentičnostDokumenta(volilec_id: int, dokument_podpis: string): int
+  +avtenticirajVolilca(volilec_id: int): int
+}
+
+class RFO_API << boundary >>  {
+  +pridobiPodatkeFizicneOsebe(oseba_id: int): Volilec
+  +pridobiIdFizicneOsebe(ime: string, priimek: string, spol: char, prebivalisce_naslov: string, drzavljanstvo_ids: int[], rojstvo_datum: date, EMSO: int, davcna_stevilka: int): int
+}
+
+class PrikazPodatkovOVolilcuView << boundary >> {
+  +prikaziPodatkeVolilca(volilec_id: int): Volilec
+}
+
+class RocnoIskanjeVolilcaView << boundary >> {
+  +poisciVolilca(ime: string, priimek: string, spol: char, prebivalisce_naslov: string, drzavljanstvo_ids: int[], rojstvo_datum: date, EMSO: int, davcna_stevilka: int): int
+}
+
+class CitalecOsebnihDokumentov << boundary >> {
+  -oseba_id: int
+  -dokument_podpis: string
+  --
+  +preberiPodatke(): Dokument
+}
+
+class IzbiraGlasovanja << control >> {
+}
+
+VolilciController "0..*" --> "1..1" Volilec
+
+RFO_API "1..1" --> "1..1" VolilciController
+RocnoIskanjeVolilcaView "1..1" --> "0..*" VolilciController
+CitalecOsebnihDokumentov "1..1"--> "0..1" VolilciController
+PrikazPodatkovOVolilcuView "1..1" --> "1..*" VolilciController
+
+VolilciController "1..1" --> "1..1" IzbiraGlasovanja
+
+@enduml

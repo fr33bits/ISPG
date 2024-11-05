@@ -1,0 +1,117 @@
+@startuml "PERT diagram"
+skinparam backgroundColor transparent
+left to right direction
+
+scale 0.8
+
+<style>
+stateDiagram {
+  arrow {
+    LineColor black
+  }
+}
+</style>
+
+skinparam State {
+  BackgroundColor #e8f5fd
+  BorderColor #5FB8EC
+}
+
+skinparam criticState {
+  BackgroundColor #ff5d45
+  BorderColor #ff5d45
+}
+
+
+skinparam defaultTextAlignment center  
+
+
+state "A1" as A1 : <#e8f5fd,#e8f5fd>|  47 | 0 | 47 |\n|    0 | 0 | 47 |
+state "<color:darkred>A2</color>" as A2 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  5 | 0 | 5 |\n|    x | x | x |
+
+state "B1" as B1 : <#e8f5fd,#e8f5fd>|  5 | 5 | 10 |\n|    4 | 9 | 14 |
+state "<color:darkred>B2</color>" as B2 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  5 | 5 | 10 |\n|    0 | 5 | 10 |
+state "B3" as B3 : <#e8f5fd,#e8f5fd>|  5 | 10 | 15 |\n|    4 | 14 | 19 |
+state "B4" as B4 : <#e8f5fd,#e8f5fd>|  5 | 10 | 15 |\n|    32 | 42 | 47 |
+state "B5" as B5 : <#e8f5fd,#e8f5fd>|  5 | 10 | 15 |\n|    4 | 14 | 19 |
+
+state "C1" as C1 : <#e8f5fd,#e8f5fd>|  5 | 10 | 15 |\n|    0 | 10 | 15 |
+state "C2" as C2 : <#e8f5fd,#e8f5fd>|  5 | 15 | 20 |\n|    4 | 19 | 24 |
+state "C3" as C3 : <#e8f5fd,#e8f5fd>|  5 | 15 | 20 |\n|    4 | 19 | 24 |
+state "C4" as C4 : <#e8f5fd,#e8f5fd>|  5 | 15 | 20 |\n|    4 | 19 | 24 |
+state "C5" as C5 : <#e8f5fd,#e8f5fd>|  5 | 15 | 20 |\n|    4 | 19 | 24 |
+state "<color:darkred>C6</color>" as C6 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  5 | 10 | 15 |\n|    0 | 10 | 15 |
+
+state "<color:darkred>C7</color>" as C7 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  9 | 15 | 24 |\n|    0 | 15 | 24 |
+state "<color:darkred>C8</color>" as C8 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  5 | 24 | 29 |\n|    0 | 24 | 29 |
+
+state "<color:darkred>C9</color>" as C9 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  7 | 29 | 36 |\n|    0 | 29 | 36 |
+state "<color:darkred>C10</color>" as C10 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  5 | 24 | 29 |\n|    0 | 24 | 29 |
+state "<color:darkred>C11</color>" as C11 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  2 | 29 | 31 |\n|    0 | 29 | 31 |
+state "<color:darkred>C12</color>" as C12 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  4 | 31 | 35 |\n|    0 | 31 | 35 |
+state "<color:darkred>C13</color>" as C13 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  1 | 35 | 36 |\n|    0 | 35 | 36 |
+state "C14" as C14 : <#e8f5fd,#e8f5fd>|  7 | 20 | 27 |\n|    9 | 29 | 36 |
+
+state "<color:darkred>C15</color>" as C15 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  5 | 36 | 41 |\n|    0 | 36 | 41 |
+state "C16" as C16 : <#e8f5fd,#e8f5fd>|  10 | 20 | 30 |\n|    13 | 33 | 43 |
+
+state "D1" as D1 : <#e8f5fd,#e8f5fd>|  2 | 36 | 38 |\n|    9 | 45 | 47 |
+state "D2" as D2 : <#e8f5fd,#e8f5fd>|  2 | 31 | 33 |\n|    10 | 41 | 43 |
+state "<color:darkred>D3</color>" as D3 #ffe6e6;line:darkred : <#ffe6e6,#ffe6e6>|  6 | 41 | 47 |\n|    0 | 41 | 47 |
+state "D4" as D4 : <#e8f5fd,#e8f5fd>|  4 | 36 | 40 |\n|    7 | 43 | 47 |
+state "D5" as D5 : <#e8f5fd,#e8f5fd>|  6 | 36 | 42 |\n|    5 | 41 | 47 |
+
+
+
+A2 --> B1
+A2 --> B2
+
+B1 --> B3
+B1 --> B4
+B1 --> B5
+B1 --> C1
+B3 --> C2
+
+C1 --> C2
+B3 --> C3
+C1 --> C3
+C1 --> C4
+B5 --> C5
+C1 --> C5
+B2 --> C6
+
+C1 --> C7
+C6 --> C7
+C2 --> C8
+C3 --> C8
+C5 --> C8
+C7 --> C8
+C8 --> C9
+C2 --> C10
+C3 --> C10
+C4 --> C10
+C5 --> C10
+C7 --> C10
+C10 --> C11
+C11 --> C12
+C12 --> C13
+
+C1 --> C14
+C2 --> C14
+
+C8 --> C15
+C9 --> C15
+C13 --> C15
+C14 --> C15
+
+C5 --> C16
+C9 --> D1
+C13 --> D1
+
+C11 --> D2
+C15 --> D3
+C13 --> D4
+C16 --> D4
+D2 --> D4
+C13 --> D5
+@enduml

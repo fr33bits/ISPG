@@ -1,0 +1,139 @@
+@startuml Volilni imeniki
+hide circle
+skinparam class {
+  arrowColor black
+}
+skinparam class<<boundary>> {
+  backgroundColor #f2fce8
+  borderColor #4d8712
+}
+skinparam class<<control>> {
+  backgroundColor #fce8e8
+  borderColor #9e1515
+}
+skinparam class<<entity>> {
+  backgroundColor #e8f5fc
+  borderColor #5FB8EC
+}
+
+class ZapisUdelezbe << entity >> {
+  'nima lastnega identifikatorja ampak glasovanje_id in volilec_id služita kot primarni ključ
+  -glasovanje_id: int
+  -volisce_id: int
+  -vpisnicar_id: int
+  -vpisnicar_tip_avtentikacije: string
+  -vpisnicar_podpis: string
+  -volilec_id: int
+  -volilec_tip_avtentikacije: string
+  -volilec_podpis: string
+  -nacin_glasovanja: string
+  -glasovalni_material_id: int
+  -cas_zapisa: datetime
+  --
+  +vpis(
+    glasovanje_id: int, volisce_id: int
+    vpisnicar_id: int, vpisnicar_tip_avtentikacije: string, vpisnicar_podpis: string,
+    volilec_id: int, volilec_tip_avtentikacije: string, volilec_podpis: string,
+    nacin_glasovanja: string, glasovalni_material_id: int): int
+  +pridobiZapisUdelezbeGlasovanjevolilec(glasovanje_id: int, volilec_id: int): ZapisUdelezbe
+  +pridobiZapisUdelezbeVolisce(volisce_id: int): ZapisUdelezbe[]
+  +pridobiZapisUdelezbeGlasovalniMaterial(glasovalni_material_id: int): ZapisUdelezbe
+  +pridobiZapiseUdelezbeGlasovanje(glasovanje_id: int): ZapisUdelezbe[]
+  +pridobiZapiseUdelezbevolilec(volilec_id: int): ZapisUdelezbe[]
+  +pridobiZapiseUdelezbeGlasovanjeNacin(glasovanje_id: int, nacin_glasovanja: string: int): ZapisUdelezbe[]
+  +pridobiZapiseUdelezbeObodbje(cas_zapisa_start: datetime, cas_zapisa_end: datetime): ZapisUdelezbe[]
+  +pridobiSteviloUdelezencev(glasovanje_id: int): int
+  +izbrisZapisovUdelezbeGlasovanje(glasovanje_id: int): int
+}
+
+class PostniGlasovalniMaterial << entity >> {
+  -glasovalni_material_id: int
+  -glasovanje_id: int
+  -volilec_id: int
+  -cilj_naslov: Naslov
+  -odobritev_nacin: string
+  -odobritev_cas: datetime
+  -posiljanje_cas: datetime
+  -prejem_cas: datetime
+  -status: int
+  --
+  +vpis(glasovanje_id: int, volilec_id: int, cilj_naslov: Naslov, odobritev_nacin: string): int
+  +poslano(glasovalni_material_id: int): int
+  +prejeto(glasovalni_material_id: int): int
+  +pridobiGlasovalniMaterial(glasovalni_material_id: int): PostniGlasovalniMaterial
+  +pridobiGlasovalniMaterialGlasovanje(glasovanje_id: int): PostniGlasovalniMaterial[]
+  +pridobiGlasovalniMaterialvolilec(volilec_id: int): PostniGlasovalniMaterial[]
+  +pridobiGlasovalniMaterialGlasovanje(glasovanje_id: int, volilec_id: int): PostniGlasovalniMaterial[]
+  +pridobiGlasovalniMaterialNaslov(cilj_naslov: int): PostniGlasovalniMaterial[]
+  +izbrisGlasovalniMaterialiGlasovanja(glasovanje_id: int): int
+}
+
+class VolilniImenikiController << control >> {
+  +pridobiSplosnoUdelezbo(glasovanje_id: int, spol: char, starost_min: int, starost_max: int, nacin_glasovanja: string,
+  cas: datetime, geo_volisce_id: int, geo_prebivalisce_id: int, geo_cilj_posiljke_id: int): int
+  +pridobiSpecificnoUdelezbo(glasovanje_id: int, volilec_id: int): ZapisUdelezbe
+  +preveriNeudelezbo(glasovanje_id: int, volilec_id: int): bool
+  +izbrisZapisovUdelezbeGlasovanje(glasovanje_id: int): int
+
+  +pridobiGlasovalniMaterialGlasovanje(glasovanje_id: int): PostniGlasovalniMaterial[]
+  +pridobiGlasovalniMaterial(glasovalni_material_id: int): PostniGlasovalniMaterial
+  +pridobiGlasovalniMaterialGlasovanje(glasovanje_id: int, volilec_id: int): PostniGlasovalniMaterial[]
+  +preveriNeposiljanje(glasovanje_id: int, volilec_id: int): bool
+  +izbrisGlasovalniMaterialiGlasovanja(glasovanje_id: int): int
+}
+
+class VpogledSplosnaUdelezbaView << boundary >> {
+'S temi parametri hkrati spročamo, če po njih sploh hočemo filtrirati
+'spol=N pomeni, da so rezultati spolno nevtralni oz. se ne filtrirajo po spolu
+'id_geografska_regija=0 pomeni, da se volilna udeležba prikazuje po globalni regiji (ki zajema vsa volišča) oz. se ne filtrirajo
+'min_starost=-1 oz. 0-18, ne nastavi nobene spodnje meje (razen predpisane) za filtriranje
+'max_starost=-1 pomeni, da se volilna udeležba ne filtrira po zgornji meji starosti
+
+  +pridobiSplosnoUdelezbo(glasovanje_id: int, spol: char, starost_min: int, starost_max: int, nacin_glasovanja: string,
+  cas: datetime, geo_volisce_id: int, geo_prebivalisce_id: int, geo_cilj_posiljke_id: int): int
+}
+
+class VpogledSpecificnaUdelezbaView << boundary >> {
+'S temi parametri hkrati spročamo, če po njih sploh hočemo filtrirati
+'spol=N pomeni, da so rezultati spolno nevtralni oz. se ne filtrirajo po spolu
+'id_geografska_regija=0 pomeni, da se volilna udeležba prikazuje po globalni regiji (ki zajema vsa volišča) oz. se ne filtrirajo
+'min_starost=-1 oz. 0-18, ne nastavi nobene spodnje meje (razen predpisane) za filtriranje
+'max_starost=-1 pomeni, da se volilna udeležba ne filtrira po zgornji meji starosti
+
+  +pridobiSpecificnoUdelezbo(glasovanje_id: int, volilec_id: int): ZapisUdelezbe
+}
+
+class VpogledSplosenVolilniMaterialView << boundary >> {
+'S temi parametri hkrati spročamo, če po njih sploh hočemo filtrirati
+'spol=N pomeni, da so rezultati spolno nevtralni oz. se ne filtrirajo po spolu
+'id_geografska_regija=0 pomeni, da se volilna udeležba prikazuje po globalni regiji (ki zajema vsa volišča) oz. se ne filtrirajo
+'min_starost=-1 oz. 0-18, ne nastavi nobene spodnje meje (razen predpisane) za filtriranje
+'max_starost=-1 pomeni, da se volilna udeležba ne filtrira po zgornji meji starosti
+
+  +pridobiGlasovalniMaterialGlasovanje(glasovanje_id: int): PostniGlasovalniMaterial[]
+}
+
+class VpogledSpecificenVolilniMaterialView << boundary >> {
+'S temi parametri hkrati spročamo, če po njih sploh hočemo filtrirati
+'spol=N pomeni, da so rezultati spolno nevtralni oz. se ne filtrirajo po spolu
+'id_geografska_regija=0 pomeni, da se volilna udeležba prikazuje po globalni regiji (ki zajema vsa volišča) oz. se ne filtrirajo
+'min_starost=-1 oz. 0-18, ne nastavi nobene spodnje meje (razen predpisane) za filtriranje
+'max_starost=-1 pomeni, da se volilna udeležba ne filtrira po zgornji meji starosti
+
+  +pridobiGlasovalniMaterial(glasovalni_material_id: int): PostniGlasovalniMaterial
+  +pridobiGlasovalniMaterialGlasovanje(glasovanje_id: int, volilec_id: int): PostniGlasovalniMaterial[]
+}
+
+'????:
+PostniGlasovalniMaterial "0..1" --- "0..1" ZapisUdelezbe
+
+VolilniImenikiController "0..*" --> "1..1" ZapisUdelezbe
+VolilniImenikiController "0..*" --> "1..1" PostniGlasovalniMaterial
+
+'Controller se uporablja tudi za druge namene in lahko obstaja brez drugih pogledov
+VpogledSplosnaUdelezbaView "1..1" --> "0..1" VolilniImenikiController
+VpogledSpecificnaUdelezbaView "1..1" --> "0..1" VolilniImenikiController
+VpogledSplosenVolilniMaterialView "1..1" --> "0..1" VolilniImenikiController
+VpogledSpecificenVolilniMaterialView "1..1" --> "0..1" VolilniImenikiController
+
+@enduml

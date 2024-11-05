@@ -1,0 +1,155 @@
+@startuml
+left to right direction
+skinparam linetype ortho
+
+actor "Administrator" as admin
+actor "Član DVK" as memberDVK
+actor "Član OVK" as memberOVK
+actor "Član VO" as memberVO
+actor "Opazovalec volitev" as observer
+actor "Neprijavljen uporabnik" as anon
+
+actor "Centralni register prebivalstva" as crp
+actor "Evidenca voline pravice" as evp
+actor "Veriga blokov" as bc
+actor "eUprava" as eU
+actor "Poštna storitev" as PS
+
+rectangle "Elektronski volilni imenik"{
+	usecase "[F21] Registracija članov DVK" as UC1
+    'usecase "Aktivacija članov DVK" as UC2
+    'usecase "Deaktivacija članov DVK"as UC3
+    'usecase "Posodabljanje podatkov o članih DVK" as UC4
+    'usecase "Brisanje podatkov o članih DVK" as UC5
+    
+    usecase "[F22] Registracija opazovalcev volitev" as UC6
+    usecase "[F23] Aktivacija opazovalcev volitev" as UC7
+    usecase "[F24] Deaktivacija opazovalcev volitev" as UC8
+    'usecase "Posodabljanje podatkov o opazovalcih volitev" as UC9
+    'usecase "Brisanje podatkov o članih VO" as UC10
+    
+    usecase "[F5] Registracija članov OVK" as UC11
+    usecase "[F6] Aktivacija članov OVK" as UC12
+    usecase "[F7] Deaktivacija članov OVK" as UC13
+    'usecase "Posodabljanje podatkov o članih OVK" as UC14
+    'usecase "Brisanje podatkov o članih OVK" as UC15
+    
+    usecase "[F8] Registracija članov VO" as UC16
+    usecase "[F9] Aktivacija članov VO" as UC17
+    usecase "[F10] Deaktivacija članov VO" as UC18
+    'usecase "Posodabljanje podatkov o članih VO" as UC19
+    'usecase "Brisanje podatkov o članih VO" as UC20
+    
+    usecase "[F1] Prijava" as UC21
+  	usecase "[F2] Prijava s certifikatom" as UC22
+  	usecase "[F3] Prijava s hardware tokenom" as UC23
+  	usecase "[F4] Prijava s TOTP" as UC24
+    usecase "[F11] Odjava" as UC25
+   
+   	usecase "[F20] Upravljanje šifranta volišč" as UC26
+	'usecase "Dodajanje volišča" as UC26
+    'usecase "Posodabljanje podatkov o volišču" as UC27
+	'usecase "Brisanje volišča" as UC28
+    
+    usecase "[F17] Pošiljanje glasovnice\n(za glasovanje po pošti)" as UC29
+  	usecase "[F18] Dodelitev glasovnice\n(ob prisotnosti volilnega odbora)" as UC30
+    usecase "[F19] Prejem glasovnice\n(po glasovanju po pošti)" as UC31
+    
+    usecase "Identifikacija volilca" as UC32
+    usecase "Preverjanje istovetnosti volilca" as UC33
+  	usecase "Preverjanje upravičenosti do glasovanja" as UC34
+    
+  	usecase "Zabeleženje udeležbe" as UC36
+  	usecase "Izdaja potrdila o glasovanju" as UC37
+    
+ 	usecase "[F12] Vpogled v splošno volilno udeležbo" as UC38
+  	usecase "[F13] Vpogled v splošno volilno udeležbo po geografiji" as UC39
+  	usecase "[F14] Vpogled v splošno volilno udeležbo po spolu" as UC40
+  	usecase "[F15] Vpogled v splošno volilno udeležbo po starosti" as UC41
+  	usecase "[F16] Vpogled v udeležbo posameznega volilca" as UC42
+}
+
+admin --down-> UC1
+'admin --down-> UC2
+'admin --down-> UC3
+'admin --down-> UC4
+'admin --down-> UC5
+
+memberDVK --down-> UC6
+memberDVK --down-> UC7
+memberDVK --down-> UC8
+'memberDVK --down-> UC9
+'memberDVK --down-> UC10
+
+memberDVK --down-> UC11
+memberDVK --down-> UC12
+memberDVK --down-> UC13
+'memberDVK --down-> UC14
+'memberDVK --down-> UC15
+
+memberOVK --down-> UC16
+memberOVK --down-> UC17
+memberOVK --down-> UC18
+'memberOVK --down-> UC19
+'memberOVK --down-> UC20
+
+anon --down-> UC21
+UC21 <|-- UC22
+UC21 <|-- UC23
+UC21 <|-- UC24
+admin ---> UC25
+memberDVK ---> UC25
+memberOVK ---> UC25
+memberVO ---> UC25
+observer ---> UC25
+
+memberOVK --down-> UC26
+'memberOVK --down-> UC27
+'memberOVK --down-> UC28
+
+memberOVK --down-> UC29
+memberVO --down-> UC30
+memberOVK --down-> UC31
+
+UC29 .....down.> UC32 :<<include>>
+UC29 .....down.> UC33 :<<include>>
+UC29 .....down.> UC34 :<<include>>
+
+UC30 .....down.> UC32 :<<include>>
+UC30 .....down.> UC33 :<<include>>
+UC30 .....down.> UC34 :<<include>>
+UC30 .....down.> UC36 :<<include>>
+UC30 <.down..... UC37  :<<extend>>
+
+UC31 .....down.> UC32 :<<include>>
+UC31 .....down.> UC33 :<<include>>
+UC31 .....down.> UC34 :<<include>>
+UC31 .....down.> UC36 :<<include>>
+
+UC34 ---> evp
+UC34 ---> crp
+
+UC36 ---> bc
+
+UC42 <--- eU
+
+'admin --------> UC38
+memberDVK -----> UC38
+memberOVK -----> UC38
+memberVO ----> UC38
+observer ---> UC38
+anon ---> UC38
+
+UC38 <|---- UC39
+UC38 <|---- UC40
+UC38 <|---- UC41
+
+'admin ---> UC42
+memberDVK ---> UC42
+memberOVK ---> UC42
+memberVO ---> UC42
+observer ---> UC42
+
+eU ---> UC29
+PS <--- UC29
+@enduml

@@ -1,0 +1,1678 @@
+@startuml Prijava
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "Neprijavljen uporabnik" <<actor>>
+participant PrijavaView <<boundary>>
+participant PrijavaCertifikatStrojniZetonView <<boundary>>
+participant PrijavaUIGView <<boundary>>
+participant AvtentikacijaController <<controler>>
+participant RegistriranUporabnik <<entity>>
+
+alt "Prijava s hardware žetonom"
+
+"Neprijavljen uporabnik" -> PrijavaView : // klik na gumb "prijava" in preusmeritev na stran za prijavo
+activate PrijavaView
+
+PrijavaView -> PrijavaCertifikatStrojniZetonView : // klik na možnost prijave s hardware žetonom
+activate PrijavaCertifikatStrojniZetonView
+
+PrijavaCertifikatStrojniZetonView -> AvtentikacijaController : prijava(hardware žeton: string)
+activate AvtentikacijaController
+
+AvtentikacijaController -> RegistriranUporabnik : preveriHardwareToken(id_uporabnika: int, hardware žeton: string)
+activate RegistriranUporabnik
+
+alt "Uspešna prijava s hardware žetonom"
+AvtentikacijaController <-- RegistriranUporabnik : // vrni status za pravilen hardware žeton
+deactivate RegistriranUporabnik
+
+PrijavaCertifikatStrojniZetonView <-- AvtentikacijaController : // vrni status za pravilen hardware žeton
+deactivate AvtentikacijaController
+
+"Neprijavljen uporabnik" <-- PrijavaCertifikatStrojniZetonView : // preusmeritev na osnovno stran sistema
+
+else "Neveljaven hardware žeton"
+activate RegistriranUporabnik
+activate AvtentikacijaController
+
+AvtentikacijaController <-- RegistriranUporabnik : // vrni status za neveljaven hardware žeton
+deactivate RegistriranUporabnik
+
+PrijavaCertifikatStrojniZetonView <-- AvtentikacijaController : // vrni status za neveljaven hardware žeton
+deactivate AvtentikacijaController
+
+PrijavaCertifikatStrojniZetonView -> PrijavaCertifikatStrojniZetonView ++ : // sporočilo o napačnem hardware žetonu in možnost ponovne prijave
+deactivate PrijavaCertifikatStrojniZetonView
+
+else "Hardware žeton ni zaznan"
+activate AvtentikacijaController
+
+PrijavaCertifikatStrojniZetonView <-- AvtentikacijaController : // vrni status za nezaznan hardware žeton
+deactivate AvtentikacijaController
+
+PrijavaCertifikatStrojniZetonView -> PrijavaCertifikatStrojniZetonView ++ : // sporocilo o nezaznanem hardware žetonu in možnost ponovne prijave
+deactivate PrijavaCertifikatStrojniZetonView
+
+end
+
+else "Prijava s certifikatom"
+"Neprijavljen uporabnik" -> PrijavaView : // klik na gumb "prijava" in preusmeritev na stran za prijavo
+
+PrijavaView -> PrijavaCertifikatStrojniZetonView : // klik na možnost prijave s certifikatom
+activate PrijavaCertifikatStrojniZetonView
+
+PrijavaCertifikatStrojniZetonView -> AvtentikacijaController : prijava(certifikat: string)
+activate AvtentikacijaController
+
+AvtentikacijaController -> RegistriranUporabnik : preveriCertifikat(id_uporabnika: int, certifikat: string)
+activate RegistriranUporabnik
+
+alt "Uspešna prijava s certifikatom"
+AvtentikacijaController <-- RegistriranUporabnik :  // vrni status za veljaven certifikat
+deactivate RegistriranUporabnik
+
+PrijavaCertifikatStrojniZetonView <-- AvtentikacijaController : // vrni status za veljaven certifikat
+deactivate AvtentikacijaController
+
+"Neprijavljen uporabnik" <-- PrijavaCertifikatStrojniZetonView : // preusmeritev na osnovno stran sistema
+
+else "Neveljaven certifikat"
+activate  RegistriranUporabnik
+AvtentikacijaController <-- RegistriranUporabnik :  // vrni status za neveljaven certifikat
+deactivate RegistriranUporabnik
+
+activate AvtentikacijaController
+PrijavaCertifikatStrojniZetonView <-- AvtentikacijaController : // vrni status za neveljaven certifikat
+deactivate AvtentikacijaController
+
+PrijavaCertifikatStrojniZetonView -> PrijavaCertifikatStrojniZetonView ++ : // sporocilo o neveljavnem certifikatu in možnost ponovne prijave
+deactivate PrijavaCertifikatStrojniZetonView
+
+else "Certifikata ni v brskalniku"
+activate AvtentikacijaController
+PrijavaCertifikatStrojniZetonView <-- AvtentikacijaController :  // vrni status za nezaznan certifikat
+deactivate RegistriranUporabnik
+
+PrijavaCertifikatStrojniZetonView -> PrijavaCertifikatStrojniZetonView ++ : // sporocilo o nezaznanem certifikatu in možnost ponovne prijave
+deactivate PrijavaCertifikatStrojniZetonView
+end
+
+else "Prijava s TOTP"
+"Neprijavljen uporabnik" -> PrijavaView : // klik na gumb "prijava" in preusmeritev na stran za prijavo
+
+PrijavaView -> PrijavaUIGView : // klik na možnost prijave s TOTP
+activate PrijavaUIGView
+
+PrijavaUIGView -> AvtentikacijaController : poizkusPrijave(uporabniško_ime: string, geslo: string, TOTP: int)
+activate AvtentikacijaController
+
+AvtentikacijaController -> RegistriranUporabnik : preveriVeljavnostTOTP(uporabniško_ime: string, geslo: string, TOTP: int)
+activate RegistriranUporabnik
+
+alt "Uspešna prijava s TOTP"
+AvtentikacijaController <-- RegistriranUporabnik :  // vrni status za veljaven TOTP
+deactivate RegistriranUporabnik
+
+PrijavaUIGView <-- AvtentikacijaController : // vrni status za veljaven TOTP
+deactivate AvtentikacijaController
+
+"Neprijavljen uporabnik" <-- PrijavaUIGView : // preusmeritev na osnovno stran sistema
+
+else "Napačno uporabniško ime in geslo"
+activate  RegistriranUporabnik
+AvtentikacijaController <-- RegistriranUporabnik :  // vrni status za neveljavno TOTP prijavo
+deactivate RegistriranUporabnik
+
+activate AvtentikacijaController
+PrijavaUIGView <-- AvtentikacijaController : // vrni status za neveljavni TOTP prijavi
+deactivate AvtentikacijaController
+
+PrijavaUIGView -> PrijavaUIGView ++ : // sporocilo o neveljavni TOTP prijavi in možnost ponovne prijave
+deactivate PrijavaUIGView
+
+else "Napačno enkratno geslo"
+activate  RegistriranUporabnik
+AvtentikacijaController <-- RegistriranUporabnik :  // vrni status za neveljavni TOTP prijavi
+deactivate RegistriranUporabnik
+
+activate AvtentikacijaController
+PrijavaUIGView <-- AvtentikacijaController : // vrni status za neveljavni TOTP prijavi
+deactivate AvtentikacijaController
+
+PrijavaUIGView -> PrijavaUIGView ++ : // sporocilo o neveljavni TOTP prijavi in možnost ponovne prijave
+deactivate PrijavaUIGView
+end
+end
+@enduml
+
+
+
+@startuml Registracija članov DVK
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor administrator <<actor>>
+participant UporabnikiListingView <<boundary>>
+participant RegistracijaView <<boundary>>
+participant UpravljanjeUporabnikaControler <<controler>>
+participant RegistriranUporabnik <<entity>>
+
+alt "Registracija članov DVK preko obrazca na strani"
+
+administrator -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> RegistracijaView : dodajUporabnika()
+activate RegistracijaView
+
+RegistracijaView -> RegistracijaView ++ : // izbrano dodajanje novega člana DVK preko spletnega obrazca
+
+RegistracijaView -> UpravljanjeUporabnikaControler : sporociPodatkeUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, geslo: string, vloga:string)
+activate UpravljanjeUporabnikaControler
+
+
+alt "Uspešna registracija preko obrazca na strani"
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : registrirajUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, vloga:string, geslo: string, TOTP_seme: string; javni_kljuc: string)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status za pravilno registraranega novega člana DVK
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // preusmeritev na stran s seznamom vseh uporabnikov, sporočilo o pravilno registraranem novem članu DVK
+deactivate UpravljanjeUporabnikaControler
+
+
+else "Neveljavno izpolnjen obrazec na strani"
+
+RegistracijaView <-- UpravljanjeUporabnikaControler : // vrni status za neveljavno registraranega novega člana DVK in sporočilo z napako
+deactivate UpravljanjeUporabnikaControler
+
+RegistracijaView -> RegistracijaView ++ : // označi polja, ki jih je potrebno popraviti in omogoči ponovno dodajanje novega člana DVK
+deactivate RegistracijaView
+end
+
+else "Registracija članov DVK preko obstoječe CSV datoteke"
+administrator -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> RegistracijaView : dodajUporabnika()
+activate RegistracijaView
+
+RegistracijaView -> RegistracijaView ++ : // izbrano dodajanje novega člana DVK preko nalaganja obstoječe CSV datoteke
+
+RegistracijaView -> UpravljanjeUporabnikaControler : sporociPodatkeUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, geslo: string, vloga:string)
+activate UpravljanjeUporabnikaControler
+
+
+alt "Uspešna registracija preko obstoječe CSV datoteke"
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : registrirajUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, vloga:string, geslo: string, TOTP_seme: string; javni_kljuc: string)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status za pravilno registraranega novega člana DVK
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // preusmeritev na stran s seznamom vseh uporabnikov, sporočilo o pravilno registraranem novem članu DVK
+deactivate UpravljanjeUporabnikaControler
+
+
+else "Neveljavna CSV datoteka za dodajanje novih članov DVK"
+
+RegistracijaView <-- UpravljanjeUporabnikaControler : // vrni status za neveljavno registraranega novega člana DVK in sporočilo z napako
+deactivate UpravljanjeUporabnikaControler
+
+RegistracijaView -> RegistracijaView ++ : // označi polja, ki jih je potrebno popraviti in omogoči ponovno dodajanje novega člana DVK
+deactivate RegistracijaView
+end
+
+end
+@enduml
+
+
+
+@startuml Registracija članov okrajnih volilnih komisij
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "član DVK" <<actor>>
+participant UporabnikiListingView <<boundary>>
+participant RegistracijaView <<boundary>>
+participant UpravljanjeUporabnikaControler <<controler>>
+participant RegistriranUporabnik <<entity>>
+
+alt "Registracija članov okrajnih volilnih komisij preko obrazca na strani"
+
+"član DVK" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> RegistracijaView : dodajUporabnika()
+activate RegistracijaView
+
+RegistracijaView -> RegistracijaView ++ : // izbrano dodajanje novega člana okrajnih volilnih komisij preko spletnega obrazca
+
+RegistracijaView -> UpravljanjeUporabnikaControler : sporociPodatkeUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, geslo: string, vloga:string)
+activate UpravljanjeUporabnikaControler
+
+
+alt "Uspešna registracija preko obrazca na strani"
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : registrirajUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, vloga:string, geslo: string, TOTP_seme: string; javni_kljuc: string)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status za pravilno registraranega novega člana okrajnih volilnih komisij
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // preusmeritev na stran s seznamom vseh uporabnikov, sporočilo o pravilno registraranem novem članu okrajnih volilnih komisij
+deactivate UpravljanjeUporabnikaControler
+
+
+else "Neveljavno izpolnjen obrazec na strani"
+
+RegistracijaView <-- UpravljanjeUporabnikaControler : // vrni status za neveljavno registraranega novega člana okrajnih volilnih komisij in sporočilo z napako
+deactivate UpravljanjeUporabnikaControler
+
+RegistracijaView -> RegistracijaView ++ : // označi polja, ki jih je potrebno popraviti in omogoči ponovno dodajanje novega člana okrajnih volilnih komisij
+deactivate RegistracijaView
+end
+
+else "Registracija članov okrajnih volilnih komisij preko obstoječe CSV datoteke"
+"član DVK" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> RegistracijaView : dodajUporabnika()
+activate RegistracijaView
+
+RegistracijaView -> RegistracijaView ++ : // izbrano dodajanje novega člana okrajnih volilnih komisij preko nalaganja obstoječe CSV datoteke
+
+RegistracijaView -> UpravljanjeUporabnikaControler : sporociPodatkeUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, geslo: string, vloga:string)
+activate UpravljanjeUporabnikaControler
+
+
+alt "Uspešna registracija preko obstoječe CSV datoteke"
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : registrirajUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, vloga:string, geslo: string, TOTP_seme: string; javni_kljuc: string)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status za pravilno registraranega novega člana okrajnih volilnih komisij
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // preusmeritev na stran s seznamom vseh uporabnikov, sporočilo o pravilno registraranem novem članu okrajnih volilnih komisij
+deactivate UpravljanjeUporabnikaControler
+
+
+else "Neveljavna CSV datoteka za dodajanje novih članov okrajnih volilnih komisij"
+
+RegistracijaView <-- UpravljanjeUporabnikaControler : // vrni status za neveljavno registraranega novega člana okrajnih volilnih komisij in sporočilo z napako
+deactivate UpravljanjeUporabnikaControler
+
+RegistracijaView -> RegistracijaView ++ : // označi polja, ki jih je potrebno popraviti in omogoči ponovno dodajanje novega člana okrajnih volilnih komisij
+deactivate RegistracijaView
+end
+
+end
+@enduml
+
+
+
+@startuml Deaktivacija računa članov okrajnih volilnih komisij
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "član DVK" <<actor>>
+participant UporabnikiListingView <<boundary>>
+participant PrikaziUporabnikaView <<boundary>>
+participant UpravljanjeUporabnikaControler <<controler>>
+participant RegistriranUporabnik <<entity>>
+
+
+"član DVK" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // filtriranje za prikaz članov okrajne volilne komisije
+
+UporabnikiListingView -> PrikaziUporabnikaView : pridobiPodatke(id_uporabnika: string)
+activate PrikaziUporabnikaView
+
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : pridobiPodatke(id_uporabnika: int)
+activate UpravljanjeUporabnikaControler
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : pridobiPodatke(id_uporabnika: int)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni potrobnosti o izbranem uporabniku
+deactivate RegistriranUporabnik
+
+PrikaziUporabnikaView <-- UpravljanjeUporabnikaControler : // prikaz podrobnosti o izbranem uporabniku
+deactivate UpravljanjeUporabnikaControler
+
+PrikaziUporabnikaView -> PrikaziUporabnikaView ++ : // klik na gumb za deaktivacijo računa člana okrajne volilne komisije in potrditev odločitve
+
+activate UpravljanjeUporabnikaControler
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : deaktivirajUporabnika(id_uporabnika: int)
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : deaktivirajUporabnika(id_uporabnika: int)
+
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status o uspešno deaktiviranem računu člana okrajne volilne komisije
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // vrni status o uspešno deaktiviranem računu člana okrajne volilne komisije
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // prikaz sporočila o uspešno deatikiviranem računu člana okrajne volilne komisije
+@enduml
+
+
+
+@startuml Aktivacija računa članov okrajnih volilnih komisij
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "član DVK" <<actor>>
+participant UporabnikiListingView <<boundary>>
+participant PrikaziUporabnikaView <<boundary>>
+participant UpravljanjeUporabnikaControler <<controler>>
+participant RegistriranUporabnik <<entity>>
+
+
+"član DVK" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // filtriranje za prikaz članov okrajne volilne komisije
+
+UporabnikiListingView -> PrikaziUporabnikaView : pridobiPodatke(id_uporabnika: string)
+activate PrikaziUporabnikaView
+
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : pridobiPodatke(id_uporabnika: int)
+activate UpravljanjeUporabnikaControler
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : pridobiPodatke(id_uporabnika: int)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni potrobnosti o izbranem uporabniku
+deactivate RegistriranUporabnik
+
+PrikaziUporabnikaView <-- UpravljanjeUporabnikaControler : // prikaz podrobnosti o izbranem uporabniku
+deactivate UpravljanjeUporabnikaControler
+
+PrikaziUporabnikaView -> PrikaziUporabnikaView ++ : // klik na gumb za aktivacijo računa člana okrajne volilne komisije in potrditev odločitve
+
+activate UpravljanjeUporabnikaControler
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : aktivirajUporabnika(id_uporabnika: int)
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : aktivirajUporabnika(id_uporabnika: int)
+
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status o uspešno aktiviranem računu člana okrajne volilne komisije
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // vrni status o uspešno aktiviranem računu člana okrajne volilne komisije
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // prikaz sporočila o uspešno deatikiviranem računu člana okrajne volilne komisije
+@enduml
+
+
+
+@startuml Registracija članov volilnega odbora
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "član okrajne volilne komisije" <<actor>>
+participant UporabnikiListingView <<boundary>>
+participant RegistracijaView <<boundary>>
+participant UpravljanjeUporabnikaControler <<controler>>
+participant RegistriranUporabnik <<entity>>
+
+alt "Registracija članov volilnega odbora preko obrazca na strani"
+
+"član okrajne volilne komisije" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> RegistracijaView : dodajUporabnika()
+activate RegistracijaView
+
+RegistracijaView -> RegistracijaView ++ : // izbrano dodajanje novega člana volilnega odbora preko spletnega obrazca
+
+RegistracijaView -> UpravljanjeUporabnikaControler : sporociPodatkeUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, geslo: string, vloga:string)
+activate UpravljanjeUporabnikaControler
+
+
+alt "Uspešna registracija preko obrazca na strani"
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : registrirajUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, vloga:string, geslo: string, TOTP_seme: string; javni_kljuc: string)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status za pravilno registraranega novega člana volilnega odbora
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // preusmeritev na stran s seznamom vseh uporabnikov, sporočilo o pravilno registraranem novem članu volilnega odbora
+deactivate UpravljanjeUporabnikaControler
+
+
+else "Neveljavno izpolnjen obrazec na strani"
+
+RegistracijaView <-- UpravljanjeUporabnikaControler : // vrni status za neveljavno registraranega novega člana volilnega odbora in sporočilo z napako
+deactivate UpravljanjeUporabnikaControler
+
+RegistracijaView -> RegistracijaView ++ : // označi polja, ki jih je potrebno popraviti in omogoči ponovno dodajanje novega člana volilnega odbora
+deactivate RegistracijaView
+end
+
+else "Registracija članov volilnega odbora preko obstoječe CSV datoteke"
+"član okrajne volilne komisije" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> RegistracijaView : dodajUporabnika()
+activate RegistracijaView
+
+RegistracijaView -> RegistracijaView ++ : // izbrano dodajanje novega člana volilnega odbora preko nalaganja obstoječe CSV datoteke
+
+RegistracijaView -> UpravljanjeUporabnikaControler : sporociPodatkeUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, geslo: string, vloga:string)
+activate UpravljanjeUporabnikaControler
+
+
+alt "Uspešna registracija preko obstoječe CSV datoteke"
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : registrirajUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, vloga:string, geslo: string, TOTP_seme: string; javni_kljuc: string)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status za pravilno registraranega novega člana volilnega odbora
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // preusmeritev na stran s seznamom vseh uporabnikov, sporočilo o pravilno registraranem novem članu volilnega odbora
+deactivate UpravljanjeUporabnikaControler
+
+
+else "Neveljavna CSV datoteka za dodajanje novih članov volilnega odbora"
+
+RegistracijaView <-- UpravljanjeUporabnikaControler : // vrni status za neveljavno registraranega novega člana volilnega odbora in sporočilo z napako
+deactivate UpravljanjeUporabnikaControler
+
+RegistracijaView -> RegistracijaView ++ : // označi polja, ki jih je potrebno popraviti in omogoči ponovno dodajanje novega člana volilnega odbora
+deactivate RegistracijaView
+end
+
+end
+@enduml
+
+
+
+@startuml Deaktivacija računa članov volilnega odbora
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "član okrajne volilne komisije" <<actor>>
+participant UporabnikiListingView <<boundary>>
+participant PrikaziUporabnikaView <<boundary>>
+participant UpravljanjeUporabnikaControler <<controler>>
+participant RegistriranUporabnik <<entity>>
+
+
+"član okrajne volilne komisije" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // filtriranje za prikaz članov volilnega odbora
+
+UporabnikiListingView -> PrikaziUporabnikaView : pridobiPodatke(id_uporabnika: string)
+activate PrikaziUporabnikaView
+
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : pridobiPodatke(id_uporabnika: int)
+activate UpravljanjeUporabnikaControler
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : pridobiPodatke(id_uporabnika: int)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni potrobnosti o izbranem uporabniku
+deactivate RegistriranUporabnik
+
+PrikaziUporabnikaView <-- UpravljanjeUporabnikaControler : // prikaz podrobnosti o izbranem uporabniku
+deactivate UpravljanjeUporabnikaControler
+
+PrikaziUporabnikaView -> PrikaziUporabnikaView ++ : // klik na gumb za deaktivacijo računa člana volilnega odbora in potrditev odločitve
+
+activate UpravljanjeUporabnikaControler
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : deaktivirajUporabnika(id_uporabnika: int)
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : deaktivirajUporabnika(id_uporabnika: int)
+
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status o uspešno deaktiviranem računu člana volilnega odbora
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // vrni status o uspešno deaktiviranem računu člana volilnega odbora
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // prikaz sporočila o uspešno deatikiviranem računu člana volilnega odbora
+@enduml
+
+
+
+
+@startuml Aktivacija računa članov volilnega odbora
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "član okrajne volilne komisije" <<actor>>
+participant UporabnikiListingView <<boundary>>
+participant PrikaziUporabnikaView <<boundary>>
+participant UpravljanjeUporabnikaControler <<controler>>
+participant RegistriranUporabnik <<entity>>
+
+
+"član okrajne volilne komisije" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // filtriranje za prikaz članov volilnega odbora
+
+UporabnikiListingView -> PrikaziUporabnikaView : pridobiPodatke(id_uporabnika: string)
+activate PrikaziUporabnikaView
+
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : pridobiPodatke(id_uporabnika: int)
+activate UpravljanjeUporabnikaControler
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : pridobiPodatke(id_uporabnika: int)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni potrobnosti o izbranem uporabniku
+deactivate RegistriranUporabnik
+
+PrikaziUporabnikaView <-- UpravljanjeUporabnikaControler : // prikaz podrobnosti o izbranem uporabniku
+deactivate UpravljanjeUporabnikaControler
+
+PrikaziUporabnikaView -> PrikaziUporabnikaView ++ : // klik na gumb za aktivacijo računa člana volilnega odbora in potrditev odločitve
+
+activate UpravljanjeUporabnikaControler
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : aktivirajUporabnika(id_uporabnika: int)
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : aktivirajUporabnika(id_uporabnika: int)
+
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status o uspešno aktiviranem računu člana volilnega odbora
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // vrni status o uspešno aktiviranem računu člana volilnega odbora
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // prikaz sporočila o uspešno aktiviranem računu člana volilnega odbora
+@enduml
+
+
+
+
+@startuml Registracija opazovalcev volitev
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "član DVK" <<actor>>
+participant UporabnikiListingView <<boundary>>
+participant RegistracijaView <<boundary>>
+participant UpravljanjeUporabnikaControler <<controler>>
+participant RegistriranUporabnik <<entity>>
+
+alt "Registracija opazovalcev volitev preko obrazca na strani"
+
+"član DVK" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> RegistracijaView : dodajUporabnika()
+activate RegistracijaView
+
+RegistracijaView -> RegistracijaView ++ : // izbrano dodajanje novega opazovalca volitev preko spletnega obrazca
+
+RegistracijaView -> UpravljanjeUporabnikaControler : sporociPodatkeUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, geslo: string, vloga:string)
+activate UpravljanjeUporabnikaControler
+
+
+alt "Uspešna registracija preko obrazca na strani"
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : registrirajUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, vloga:string, geslo: string, TOTP_seme: string; javni_kljuc: string)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status za pravilno registraranega novega opazovalca volitev
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // preusmeritev na stran s seznamom vseh uporabnikov, sporočilo o pravilno registraranem novem opazovalcu volitev
+deactivate UpravljanjeUporabnikaControler
+
+
+else "Neveljavno izpolnjen obrazec na strani"
+
+RegistracijaView <-- UpravljanjeUporabnikaControler : // vrni status za neveljavno registraranega novega opazovalca volitev in sporočilo z napako
+deactivate UpravljanjeUporabnikaControler
+
+RegistracijaView -> RegistracijaView ++ : // označi polja, ki jih je potrebno popraviti in omogoči ponovno dodajanje novega opazovalca volitev
+deactivate RegistracijaView
+end
+
+else "Registracija opazovalcev volitev preko obstoječe CSV datoteke"
+"član DVK" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> RegistracijaView : dodajUporabnika()
+activate RegistracijaView
+
+RegistracijaView -> RegistracijaView ++ : // izbrano dodajanje novega opazovalca volitev preko nalaganja obstoječe CSV datoteke
+
+RegistracijaView -> UpravljanjeUporabnikaControler : sporociPodatkeUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, geslo: string, vloga:string)
+activate UpravljanjeUporabnikaControler
+
+
+alt "Uspešna registracija preko obstoječe CSV datoteke"
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : registrirajUporabnika(ime: string, priimek: string, EŠEI: int, uporabnisko_ime: string, vloga:string, geslo: string, TOTP_seme: string; javni_kljuc: string)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status za pravilno registraranega novega opazovalca volitev
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // preusmeritev na stran s seznamom vseh uporabnikov, sporočilo o pravilno registraranem novem opazovalcu volitev
+deactivate UpravljanjeUporabnikaControler
+
+
+else "Neveljavna CSV datoteka za dodajanje novih opazovalcev volitev"
+
+RegistracijaView <-- UpravljanjeUporabnikaControler : // vrni status za neveljavno registraranega novega opazovalca volitev in sporočilo z napako
+deactivate UpravljanjeUporabnikaControler
+
+RegistracijaView -> RegistracijaView ++ : // označi polja, ki jih je potrebno popraviti in omogoči ponovno dodajanje novega opazovalca volitev
+deactivate RegistracijaView
+end
+
+end
+@enduml
+
+
+
+@startuml Deaktivacija računa opazovalcev volitev
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "član DVK" <<actor>>
+participant UporabnikiListingView <<boundary>>
+participant PrikaziUporabnikaView <<boundary>>
+participant UpravljanjeUporabnikaControler <<controler>>
+participant RegistriranUporabnik <<entity>>
+
+
+"član DVK" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // filtriranje za prikaz opazovalcev volitev
+
+UporabnikiListingView -> PrikaziUporabnikaView : pridobiPodatke(id_uporabnika: string)
+activate PrikaziUporabnikaView
+
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : pridobiPodatke(id_uporabnika: int)
+activate UpravljanjeUporabnikaControler
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : pridobiPodatke(id_uporabnika: int)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni potrobnosti o izbranem uporabniku
+deactivate RegistriranUporabnik
+
+PrikaziUporabnikaView <-- UpravljanjeUporabnikaControler : // prikaz podrobnosti o izbranem uporabniku
+deactivate UpravljanjeUporabnikaControler
+
+PrikaziUporabnikaView -> PrikaziUporabnikaView ++ : // klik na gumb za deaktivacijo računa opazovalca volitev in potrditev odločitve
+
+activate UpravljanjeUporabnikaControler
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : deaktivirajUporabnika(id_uporabnika: int)
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : deaktivirajUporabnika(id_uporabnika: int)
+
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status o uspešno deaktiviranem računu opazovalca volitev
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // vrni status o uspešno deaktiviranem računu opazovalca volitev
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // prikaz sporočila o uspešno deatikiviranem računu opazovalca volitev
+@enduml
+
+
+
+
+@startuml Aktivacija računa opazovalcev volitev
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "član DVK" <<actor>>
+participant UporabnikiListingView <<boundary>>
+participant PrikaziUporabnikaView <<boundary>>
+participant UpravljanjeUporabnikaControler <<controler>>
+participant RegistriranUporabnik <<entity>>
+
+
+"član DVK" -> UporabnikiListingView : prikažiUporabnike()
+activate UporabnikiListingView
+
+UporabnikiListingView -> UpravljanjeUporabnikaControler : prikažiUporabnike()
+activate UpravljanjeUporabnikaControler
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : prikažiUporabnike()
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <- RegistriranUporabnik : // vrni seznam vseh uporabnikov
+deactivate RegistriranUporabnik
+UporabnikiListingView <- UpravljanjeUporabnikaControler : // vrni seznam vseh uporabnikov in jih prikaži
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // filtriranje za prikaz opazovalcev volitev
+
+UporabnikiListingView -> PrikaziUporabnikaView : pridobiPodatke(id_uporabnika: string)
+activate PrikaziUporabnikaView
+
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : pridobiPodatke(id_uporabnika: int)
+activate UpravljanjeUporabnikaControler
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : pridobiPodatke(id_uporabnika: int)
+activate RegistriranUporabnik
+
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni potrobnosti o izbranem uporabniku
+deactivate RegistriranUporabnik
+
+PrikaziUporabnikaView <-- UpravljanjeUporabnikaControler : // prikaz podrobnosti o izbranem uporabniku
+deactivate UpravljanjeUporabnikaControler
+
+PrikaziUporabnikaView -> PrikaziUporabnikaView ++ : // klik na gumb za aktivacijo računa opazovalca volitev in potrditev odločitve
+
+activate UpravljanjeUporabnikaControler
+PrikaziUporabnikaView -> UpravljanjeUporabnikaControler : aktivirajUporabnika(id_uporabnika: int)
+
+UpravljanjeUporabnikaControler -> RegistriranUporabnik : aktivirajUporabnika(id_uporabnika: int)
+
+activate RegistriranUporabnik
+UpravljanjeUporabnikaControler <-- RegistriranUporabnik : // vrni status o uspešno aktiviranem računu opazovalca volitev
+deactivate RegistriranUporabnik
+
+UporabnikiListingView <-- UpravljanjeUporabnikaControler : // vrni status o uspešno aktiviranem računu opazovalca volitev
+deactivate UpravljanjeUporabnikaControler
+
+UporabnikiListingView -> UporabnikiListingView ++ : // prikaz sporočila o uspešno deatikiviranem računu opazovalca volitev
+@enduml
+
+
+
+
+@startuml Odjava
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "neprijavljen uporabnik" <<actor>>
+actor "administrator/član DVK/Član okrajne volilne komisije/Član volilnega odbora/Opazovalec volitev" <<actor>>
+participant "Začetna stran" <<boundary>>
+participant "Uporabniški vmesnik" <<boundary>>
+participant AvtentikacijaControler <<controler>>
+
+
+"administrator/član DVK/Član okrajne volilne komisije/Član volilnega odbora/Opazovalec volitev" -> "Uporabniški vmesnik" : // uporabnik se lahko nahaja na katerikoli strani sistema
+activate "Uporabniški vmesnik"
+
+"Uporabniški vmesnik" -> "Uporabniški vmesnik" ++ : // klik na gumb "Odjava" v desnem zgornjem kotu sistema
+
+"Uporabniški vmesnik" -> AvtentikacijaControler : odjava(uporabnik_id: int)
+activate AvtentikacijaControler
+
+"Uporabniški vmesnik" <- AvtentikacijaControler : // poslan status o uspešni odjavi uporabnika
+deactivate AvtentikacijaControler
+
+activate "Začetna stran"
+"Začetna stran" <- "Uporabniški vmesnik" : // samodejna preusmeritev na začetno stran sistema
+deactivate "Uporabniški vmesnik"
+
+"Začetna stran" -> "Začetna stran" ++ : // prikaz sporočila o uspešni odjavi uporabnika
+"neprijavljen uporabnik" <-> "Začetna stran" : // vloga uporabnika je "neprijavljen uporabnik"
+@enduml
+
+
+
+@startuml
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor Uporabnik <<actor>>
+participant "Uporabniški\nvmesnik" as Vmesnik <<boundary>>
+participant "Volilna udeležba" as Volilna_udeležba <<entity>>
+
+
+Uporabnik -> Vmesnik : klik na zavihek splošna volilna udeležba
+activate Uporabnik
+activate Vmesnik
+Vmesnik -> Volilna_udeležba : pridobiSplosnoVolilnoUdelezbo(id_volitve: int, spol: char, id_geograska_regija: int, min_starost: int, max_starost: int)
+activate Volilna_udeležba
+Volilna_udeležba -> Vmesnik : tabela[]
+deactivate Volilna_udeležba
+Vmesnik -> Uporabnik : //vrne št. volilcev
+deactivate Vmesnik
+deactivate Uporabnik
+
+
+Uporabnik -> Vmesnik : filtriraj prikaz po starosti
+activate Uporabnik
+activate Vmesnik
+Vmesnik -> Volilna_udeležba : pridobiSplosnoVolilnoUdelezbo(id_volitve: int, spol: char, id_geograska_regija: int, min_starost: int, max_starost: int)
+activate Volilna_udeležba
+Volilna_udeležba -> Vmesnik : tabela[] 
+deactivate Volilna_udeležba
+Vmesnik -> Uporabnik : //vrne tortni diagram z deležem volilcev po starosti
+deactivate Vmesnik
+deactivate Uporabnik
+
+
+Uporabnik -> Vmesnik : filtriraj prikaz po spolu
+activate Uporabnik
+activate Vmesnik
+Vmesnik -> Volilna_udeležba : pridobiSplosnoVolilnoUdelezbo(id_volitve: int, spol: char, id_geograska_regija: int, min_starost: int, max_starost: int)
+activate Volilna_udeležba
+Volilna_udeležba -> Vmesnik : tabela[] 
+deactivate Volilna_udeležba
+Vmesnik -> Uporabnik : //vrne stolpični diagram z deležem volilcev po spolu
+deactivate Vmesnik
+deactivate Uporabnik
+
+
+Uporabnik -> Vmesnik : filtriraj prikaz po geografiji
+activate Uporabnik
+activate Vmesnik
+Vmesnik -> Volilna_udeležba : pridobiSplosnoVolilnoUdelezbo(id_volitve: int, spol: char, id_geograska_regija: int, min_starost: int, max_starost: int)
+activate Volilna_udeležba
+Volilna_udeležba -> Vmesnik : tabela[] 
+deactivate Volilna_udeležba
+Vmesnik -> Uporabnik : //vrne zemljevid z deležom volilcev po regijah?
+deactivate Vmesnik
+deactivate Uporabnik
+@enduml
+
+@startuml Vpogled udeležbe posameznega volilca
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "Član državne volilne komisije/član okrajne volilne komisije/član volilnega odbora/opazovalec volitev" as član <<actor>>
+participant "VolilnaUdeležbaView"<<boundary>>
+participant "PodatkiOVolilcuView"<<boundary>>
+participant "Volilna udeležba" as udeležba <<boundary>>
+
+član -> VolilnaUdeležbaView: vpogledVolilneUdeležbe()
+activate VolilnaUdeležbaView
+
+VolilnaUdeležbaView -> VolilnaUdeležbaView ++: //izbrana možnost pogled udeležbe posameznega volilca
+
+VolilnaUdeležbaView -> PodatkiOVolilcuView: udeležbaPosameznegaVolilca()
+activate PodatkiOVolilcuView
+
+PodatkiOVolilcuView -> udeležba: vrniUdeležboVolilca()
+activate udeležba
+
+udeležba --> PodatkiOVolilcuView: vrne podatke o volilcu
+deactivate udeležba
+
+PodatkiOVolilcuView --> VolilnaUdeležbaView: vrne odgovor
+deactivate PodatkiOVolilcuView
+
+VolilnaUdeležbaView --> član: dobi odgovor
+deactivate VolilnaUdeležbaView
+@enduml
+
+
+
+@startuml Dodelitev glasovnice (ob prisotnosti volilnega odbora)
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+
+actor Volilec <<actor>>
+participant "Čitalec biometrične osebne izkaznice" as čitalec <<>>
+actor "Član volilnega odbora" as član <<actor>>
+participant "Uporabniški\nvmesnik" as Vmesnik <<>>
+participant "Volilni imenik" as imenik <<>>
+participant CRP <<>>
+participant "zunanji vir" <<>>
+participant "podatkovna baza" as baza <<>>
+
+
+
+alt osebna izkaznica je biometrična
+Volilec -> čitalec : pribljiža osebno izkaznico čitalcu
+čitalec -> Vmesnik : prebere podatke iz osebne izkaznice
+activate Vmesnik
+Vmesnik -> CRP : pridobi podatke o volilcu
+activate CRP
+CRP --> Vmesnik : vrne podatke o volilcu
+deactivate CRP
+Vmesnik -> član : prikaz podatkov in slike volilca
+deactivate Vmesnik
+activate član
+
+
+else osebna izkaznica ni biometrična
+Volilec -> član : pokaže osebno izkaznico
+član -> Vmesnik : poišči volilca
+activate Vmesnik
+Vmesnik -> baza : klic funkcije
+activate baza
+baza --> Vmesnik : //vrne odgovor
+deactivate baza
+Vmesnik --> član : dobi odgovor
+deactivate Vmesnik
+end
+
+activate član
+član -> član : preveri istovetnost
+alt osebna izkaznica ni veljavna
+član --> Volilec : sporoči volilcu, da ima neveljavno osebno izkaznico
+else potrjena istovetnost, veljavna osebna izkaznica
+član -> Vmesnik : s klikom na gumb potrdi istovetnost
+član -> Vmesnik : preveri, da ta oseba še ni volila na teh volitvah
+activate Vmesnik
+Vmesnik -> imenik : klic funkcije
+activate imenik
+imenik --> Vmesnik : vrne odgovor
+deactivate imenik
+Vmesnik --> član : dobi odgovor
+deactivate Vmesnik
+
+alt oseba je že volila
+član --> Volilec : sporoči volilcu, da je že volil na teh volitvah
+else oseba še ni volila
+član -> Vmesnik : klic na zunanji vir (preveri se pravica glasovanja na teh volitvah)
+activate Vmesnik
+Vmesnik -> "zunanji vir" : klic funkcije
+activate "zunanji vir"
+"zunanji vir" --> Vmesnik : //vrne odgovor
+deactivate "zunanji vir"
+Vmesnik --> član : dobi odgovor
+deactivate Vmesnik
+
+alt volilec nima pravice glasovati
+član --> Volilec : sporoči volilcu, da na teh volitvah ne more glasovati
+else volilec ima pravico glasovati
+
+alt osebna izkaznica je biometrična
+Volilec -> Vmesnik : podpis z digitalnim potrdilom
+activate Vmesnik
+Vmesnik -> imenik : klic funkcije
+activate imenik
+imenik --> Vmesnik : //vrne odgovor
+deactivate imenik
+Vmesnik --> član : dobi odgovor
+deactivate Vmesnik
+else osebna izkaznica ni biometrična
+Volilec -> Vmesnik : ročen podpis
+activate Vmesnik
+Vmesnik -> imenik : klic funkcije
+activate imenik
+imenik --> Vmesnik : //vrne odgovor
+deactivate imenik
+Vmesnik --> član : dobi odgovor
+deactivate Vmesnik
+end
+activate imenik
+član -> Vmesnik : zabeleži udeležbo
+activate Vmesnik
+Vmesnik -> imenik : klic funkcije
+activate imenik
+imenik --> Vmesnik : vrne odgovor
+deactivate imenik
+Vmesnik --> član : dobi odgovor
+deactivate Vmesnik
+
+član -> Vmesnik : s pritiskom na gumb izda potrdilo o glasovanju
+član --> Volilec : izročitev glasovnice
+deactivate član
+end
+end
+end
+@enduml
+
+
+
+@startuml Upravljanje šifranta volišč
+
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "Član državne nvolilne komisije" as član <<actor>>
+participant "VoliščaListingView"<<boundary>>
+participant "DodajVoliščeView"<<boundary>>
+participant "PodrobnostiVoliščaView"<<boundary>>
+participant "UpravljanjeVoliščController"<<controller>>
+participant "VoliščeEntity" as volišče <<entity>> 
+
+alt Dodajanje novih volišč v šifrant preko obrazca na strani
+član -> VoliščaListingView: prikažiVolišča()
+activate VoliščaListingView
+
+VoliščaListingView -> DodajVoliščeView: dodajVolišče()
+activate DodajVoliščeView
+
+DodajVoliščeView -> DodajVoliščeView ++: // izbrano dodajanje novega volišča preko spletnega obrazca
+
+DodajVoliščeView -> UpravljanjeVoliščController : shraniVolišče()
+activate UpravljanjeVoliščController
+
+alt "Uspešno dodano novo volišče"
+UpravljanjeVoliščController -> VoliščeEntity : shraniVolišče(novo volišče: Volišče)
+activate VoliščeEntity
+
+UpravljanjeVoliščController <-- VoliščeEntity : // vrni status za pravilno dodano novo volišče
+deactivate VoliščeEntity
+
+VoliščaListingView <-- UpravljanjeVoliščController : // preusmeritev na stran s seznamom vseh volišč, sporočilo o pravilno dodanem novem volišču
+deactivate UpravljanjeVoliščController
+
+
+else "Neveljavno izpolnjen obrazec na strani"
+
+DodajVoliščeView <-- UpravljanjeVoliščController : // vrni status za neveljavno dodano novo volišče
+deactivate UpravljanjeVoliščController
+
+DodajVoliščeView -> DodajVoliščeView ++ : // označi polja, ki jih je potrebno popraviti in omogoči ponovno dodajanje novega volišča
+deactivate DodajVoliščeView
+end
+
+
+
+else Dodajanje novih volišč v šifrant preko obstoječe CSV datoteke
+član -> VoliščaListingView : prikažiVolišča()
+activate VoliščaListingView
+
+VoliščaListingView -> DodajVoliščeView : dodajVolišče()
+activate DodajVoliščeView
+
+DodajVoliščeView -> DodajVoliščeView ++ : // izbrano dodajanje novega volišča preko nalaganja obstoječe CSV datoteke
+
+DodajVoliščeView -> UpravljanjeVoliščController : shraniVoliščeCSV()
+activate UpravljanjeVoliščController
+
+
+alt "Uspešno dodano preko obstoječe CSV datoteke"
+UpravljanjeVoliščController -> VoliščeEntity : shraniVolišče(novo volišče: Volišče)
+activate VoliščeEntity
+
+UpravljanjeVoliščController <-- VoliščeEntity : // vrni status za pravilno dodano novo volišče
+deactivate VoliščeEntity
+
+VoliščaListingView <-- UpravljanjeVoliščController : // preusmeritev na stran s seznamom vseh volišč, sporočilo o pravilno dodanem novem volišču
+deactivate UpravljanjeVoliščController
+
+
+else Neveljavna CSV datoteka za dodajanje novega volišča
+
+DodajVoliščeView <-- UpravljanjeVoliščController : // vrni status za neveljavno dodano novo volišče in sporočilo z napako
+deactivate UpravljanjeVoliščController
+
+DodajVoliščeView -> DodajVoliščeView ++ : // označi polja, ki jih je potrebno popraviti in omogoči ponovno dodajanje novega volišča
+deactivate DodajVoliščeView
+end
+end
+
+
+
+alt Brisanje obstoječih volišč iz šifranta
+član -> VoliščaListingView : prikažiVolišča()
+activate VoliščaListingView
+
+VoliščaListingView -> PodrobnostiVoliščaView : izberiVolišče()
+activate PodrobnostiVoliščaView
+
+PodrobnostiVoliščaView -> PodrobnostiVoliščaView ++ : // izbrano brisanje obstoječih volišč iz šifranta
+
+PodrobnostiVoliščaView -> UpravljanjeVoliščController : izbrišiVolišče()
+activate UpravljanjeVoliščController
+
+UpravljanjeVoliščController -> VoliščeEntity : izbrišiVolišče()
+activate VoliščeEntity
+
+UpravljanjeVoliščController <-- VoliščeEntity : // vrni status za izbrisano volišče
+deactivate VoliščeEntity
+
+VoliščaListingView <-- UpravljanjeVoliščController : // preusmeritev na stran s seznamom vseh volišč, sporočilo o izbrisanem volišču
+deactivate UpravljanjeVoliščController
+
+
+end
+
+
+alt Urejanje obstoječih volišč v šifrantu
+član -> VoliščaListingView : prikažiVolišča()
+activate VoliščaListingView
+
+VoliščaListingView -> PodrobnostiVoliščaView : izberiVolišče()
+activate PodrobnostiVoliščaView
+
+PodrobnostiVoliščaView -> PodrobnostiVoliščaView ++ : // izbrano urejanje vnosnega polja volišča
+
+PodrobnostiVoliščaView -> UpravljanjeVoliščController: shraniNovePodatkeVolišča()
+activate UpravljanjeVoliščController
+
+UpravljanjeVoliščController -> VoliščeEntity : shraniNovePodatkeVolišča()
+activate VoliščeEntity
+
+UpravljanjeVoliščController <-- VoliščeEntity : // vrni status za urejene podatke volišča
+deactivate VoliščeEntity
+
+VoliščaListingView <-- UpravljanjeVoliščController : // preusmeritev na stran s seznamom vseh volišč, sporočilo o urejenem volišču
+deactivate UpravljanjeVoliščController
+
+
+
+end
+@enduml
+
+
+
+
+@startuml Pošiljanje glasovnice (za glasovanje po pošti)
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+
+
+actor Volilec <<actor>>
+actor "Član okrajne\nvolilne komisije\n(Upravna enota)" as član <<actor>>
+participant "Uporabniški\nvmesnik" as Vmesnik <<>>
+participant "Volilni\nimenik" as imenik <<>>
+participant EVP <<>>
+participant CRP as api <<>>
+
+
+
+Volilec -> član : odda zahtevo za glasovanje po pošti\nin priloži osebni dokument
+activate član
+član -> Vmesnik : pridobi podatke o volilcu
+activate Vmesnik
+Vmesnik -> api : klic api-ja
+activate api
+api --> Vmesnik : //vrne odgovor
+deactivate api
+Vmesnik --> član : prikazani podatki o volilcu
+deactivate Vmesnik
+član -> član : preveri istovetnost ter pristnost uradnega dokumenta za identifikacijo
+
+
+alt neveljaven osebni dokument
+član --> Volilec : sporoči Volilcu, da nima veljavnega osebnega dokumenta
+else potrjena istovetnost
+član -> Vmesnik : potrdi istovetnost s pritiskom na gumb
+član -> Vmesnik : preveri se, da glasovnica volivcu po pošti\nše ni bila poslana in da še ni volil
+activate Vmesnik
+Vmesnik -> imenik : klic funkcije
+activate imenik
+imenik --> Vmesnik : //vrne odgovor
+deactivate imenik
+Vmesnik --> član : //dobi odgovor
+deactivate Vmesnik
+
+alt volilec je že volil oz. dobil glasovnico po pošti
+član --> Volilec : sporoči volilcu, da je že volil oz. da je že dobil glasovnico po pošti
+else volilec še ni volil oz. dobil glasovnice po pošti
+član -> "Vmesnik" : preveri se da ima volilec pravico glasovati na teh volitvah
+activate Vmesnik
+Vmesnik -> EVP : klic funkcije
+activate EVP
+EVP --> Vmesnik : //vrne odgovor
+deactivate EVP
+Vmesnik --> član : dobi odgovor
+deactivate Vmesnik
+
+
+
+alt Volilec nima pravice voliti
+član --> Volilec : sporoči volilcu, da ne more voliti
+else volilec ima pravico voliti
+član -> Vmesnik : zabeleži se odposlanje volilnega materiala
+activate Vmesnik
+Vmesnik -> imenik : klic funkcije
+activate imenik
+imenik --> Vmesnik : vrne odgovor
+deactivate imenik
+Vmesnik --> član : dobi odgovor
+deactivate Vmesnik
+član --> Volilec : pošlje se volilni material preko pošte Slovenije
+deactivate član
+end
+end
+end
+@enduml
+
+
+
+@startuml Prejem glasovnice (po glasovanju po pošti)
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor Volilec <<actor>>
+actor "Član okrajne\nvolilne komisije" as član <<actor>>
+participant "Uporabniški\nvmesnik" as Vmesnik <<>>
+participant "Volilni\nimenik" as imenik <<>>
+participant CRP as api <<>>
+participant EVP <<>>
+participant "Podatkovna\nbaza" as baza<<>>
+participant "Veriga\nblokov" as veriga<<>>
+
+
+Volilec -> član: pošlje izpolnjeno glasovnico poslano po pošti
+activate član
+
+član -> Vmesnik: prebere podatke iz volilnega kartona
+activate Vmesnik
+
+Vmesnik -> api: klic api-ja
+activate api
+
+api --> Vmesnik: //vrne odgovor
+deactivate api
+
+Vmesnik --> član: prikaz podatkov in slike volilca
+deactivate Vmesnik
+
+član -> član: preveri ujemanje lastoročnega podpisa
+
+
+alt Glasovnica ne vsebuje lastnoročnega podpisa
+član --> Volilec: sporoči volilcu, da manjka lastoročni podpis
+član --> Vmesnik : sporoči, da manjka lastoročni podpis
+activate Vmesnik
+Vmesnik -> imenik: klic funkcije\n (vnese napako - manjkajoč lastoročni podpis glasovnice)
+activate imenik
+imenik --> Vmesnik: //vrne odgovor
+deactivate imenik
+Vmesnik --> član: dobi odgovor
+deactivate Vmesnik
+Vmesnik --> član: //dobi odgovor
+deactivate Vmesnik
+else Lastoročni podpis se ujema
+član -> Vmesnik: preveri podatke o volilnem materialu
+activate Vmesnik
+Vmesnik -> imenik: klic funkcije\n(pridobi podatke o volilnem materialu)
+activate imenik
+imenik --> Vmesnik: vrne odgovor\n(vrne podatke o volilnem materialu)
+deactivate imenik
+Vmesnik -> član: dobi podatke o volilnem materialu
+deactivate Vmesnik
+
+
+
+alt Volivcu glasovnica preko pošte ni bila poslana
+član --> Volilec: sporoči volilcu, da mu glasovnica preko pošte ni bila poslana
+else Volivcu glasovnica preko pošte je bila poslana
+član --> Vmesnik: sporoči, da je bil volilni material prejet
+activate Vmesnik
+
+Vmesnik -> imenik: klic funkcije\n (zabeleži, da je bil volilni material prejet)
+activate imenik
+imenik --> Vmesnik: //vrne odgovor
+deactivate imenik
+Vmesnik --> član: dobi odgovor
+deactivate Vmesnik
+
+
+član -> Vmesnik: preveri, če je volilec že volil na teh volitvah
+activate Vmesnik
+Vmesnik -> imenik: klic funkcije\n(pridobi podatke o volilcu na teh volitvah)
+activate imenik
+imenik --> Vmesnik: vrne odgovor\n(vrne podatke o volilcu na teh volitvah)
+deactivate imenik
+Vmesnik -> član: prikaz podatkov o volilcu na teh volitvah
+deactivate Vmesnik
+
+
+alt Volivec je že volil na teh volitvah
+član --> Volilec: sporoči volilcu, da je na teh volitvah že volil
+else Volivec ni še volil na teh volitvah
+član -> Vmesnik: preveri, ali ima volilec pravico glasovati na teh volitvah
+activate Vmesnik
+Vmesnik -> EVP: klic funkcije
+activate EVP
+EVP --> Vmesnik: vrne odgovor
+deactivate EVP
+Vmesnik --> član: dobi podatke o volilni pravici volilca
+deactivate Vmesnik
+
+
+alt volilec nima pravice glasovati
+član --> Volilec : sporoči volilcu, da na teh volitvah ne more glasovati
+else volilec ima pravico glasovati
+član -> Vmesnik: zabeleži se udeležbo volilca na volitvah
+activate Vmesnik
+Vmesnik -> baza: klic funkcije
+activate baza
+baza --> Vmesnik: //dobi odgovor
+deactivate baza
+Vmesnik -> veriga: klic funkcije
+activate veriga
+veriga --> Vmesnik: //dobi odgovor
+deactivate veriga
+Vmesnik --> član: dobi odgovor (udeležba se je uspešno zabeležila)
+deactivate Vmesnik
+
+član -> član: loči volilno karto in kuverto z glasovnico\nter volilno karto vstavi v volilno skrinjo
+
+end
+end
+end
+end
+@enduml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@startuml DZ
+
+hide footbox
+
+skinparam backgroundcolor transparent
+skinparam defaultTextAlignment center
+skinparam actorBorderColor black
+skinparam actorBackgroundColor white
+skinparam arrowColor black  
+skinparam sequenceLifeLineBorderColor #5FB8EC
+skinparam sequenceParticipantBorderColor #5FB8EC
+skinparam sequenceParticipantBackgroundColor white
+
+actor "Uporabnik 1" AS U1 <<actor>>
+
+participant "Razred 5" as R5 <<boundary>>
+participant "Razred 2" as R2 <<control>>
+participant "Razred 4" as R4 <<entity>>
+
+activate U1
+U1 -> R5: p1 := metoda6()
+activate R5
+R5 -> R2: p2 := metoda1(13)
+activate R2
+
+loop za vsako vrednost
+R2 -> R4: p3 := metoda4()
+activate R4
+R4 -> R4: p4 := metoda5(now())
+activate R4
+R4 --> R2: p4
+deactivate R4
+deactivate R4
+R2 -> R2: // Dodaj {p3: p4}\n// v seznam
+end
+
+R2 --> R5: // Vse vrednosti\n// obdelane
+deactivate R2
+R5 --> U1: // Obvesti uporabnika
+
+@enduml
+

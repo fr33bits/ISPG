@@ -1,0 +1,75 @@
+@startuml Vpis udeležbe
+skinparam groupInheritance 2
+skinparam class {
+  borderColor #5FB8EC
+  arrowColor black
+}
+
+hide circle
+skinparam class<<boundary>> {
+  backgroundColor #f2fce8
+  borderColor #4d8712
+}
+skinparam class<<control>> {
+  backgroundColor #fce8e8
+  borderColor #9e1515
+}
+skinparam class<<entity>> {
+  backgroundColor #e8f5fc
+}
+
+class IzbiraGlasovanjaView << boundary >> {
+  +pridobiSeznamMoznihGlasovanj(volilec_id: int): Glasovanje[]
+}
+
+class IzbiraGlasovanjaController << control >> {
+  +izberiGlasovanja(volilec_id: int, glasovanje_id: int): Glasovanje[]
+}
+
+class PreizkusUpravicenostiGlasovanjaController << control >> {
+  +pridobiSeznamMoznihGlasovanj(volilec_id: int): Glasovanje[]
+  +preverjanjeNeudelezbe(volilec_id: int, glasovanja_ids: int[]): int
+}
+
+class PostnaIdentifikacijaAvtentikacijaVolilcaGlasovanjaView << boundary >> {
+  +izberiVolilca(volilec_id: int): int
+  +izberiGlasovanje(glasovanje_id: int): int
+}
+
+class PostnaIdentifikacijaAvtentikacijaVolilcaGlasovanjaController << control >> {
+  +izberiGlasovanja(volilec_id: int, glasovanje_id: int): Glasovanje[]
+}
+
+class VolilniImenikiController << control >> {
+  +preveriNeudelezbo(glasovanje_id: int, volilec_id: int): bool
+  +vpisRegisterUdelezbe(glasovanje_id: int, volisce_id: int, vpisnicar_id: int, vpisnicar_tip_avtentikacije: string, vpisnicar_podpis: string, volilec_id: int, volilec_tip_avtentikacije: string, volilec_podpis: string, nacin_glasovanja: string, glasovalni_material_id: int): int
+}
+
+class VpisPodpisView << boundary >> {
+  +podpis(glasovanje_id: int, volisce_id: int, vpisnicar_id: int, vpisnicar_tip_avtentikacije: string, volilec_id: int, volilec_tip_avtentikacije: string, nacin_glasovanja: string, glasovalni_material_id: int): int
+}
+
+class VpisPodpisController << control >> {
+  +preizkusiUpravicenostGlasovanja(glasovanje_id: int, volilec_id: int): bool
+  +podpis(glasovanje_id: int, volisce_id: int, vpisnicar_id: int, vpisnicar_tip_avtentikacije: string, volilec_id: int, volilec_tip_avtentikacije: string, nacin_glasovanja: string, glasovalni_material_id: int): int
+  +vpis(glasovanje_id: int, volisce_id: int, vpisnicar_id: int, vpisnicar_tip_avtentikacije: string, vpisnicar_podpis: string, volilec_id: int, volilec_tip_avtentikacije: string, volilec_podpis: string, nacin_glasovanja: string, glasovalni_material_id: int): int
+}
+
+class EVP_API << boundary >> {
+  +pridobiGlasovanjaZaKateraObstajaVolilnaPravica(glasovanje_id: int, volilec_id: int): int[]
+}
+
+IzbiraGlasovanjaView "1..1" --> "0..1" PreizkusUpravicenostiGlasovanjaController
+IzbiraGlasovanjaView "1..1" --> "1..1" IzbiraGlasovanjaController
+PreizkusUpravicenostiGlasovanjaController "1..1" --> "0..1" EVP_API
+PreizkusUpravicenostiGlasovanjaController "1..1" --> "0..1" VolilniImenikiController
+
+PostnaIdentifikacijaAvtentikacijaVolilcaGlasovanjaView "1..1" --> "1..1" PostnaIdentifikacijaAvtentikacijaVolilcaGlasovanjaController
+PostnaIdentifikacijaAvtentikacijaVolilcaGlasovanjaController "1..1" --> "0..1" VpisPodpisController
+
+IzbiraGlasovanjaController "1..1" --> "0..1" VpisPodpisController
+VpisPodpisController "1..1" --> "0..1" PreizkusUpravicenostiGlasovanjaController
+
+VpisPodpisView "1..1" --> "1..1" VpisPodpisController
+VpisPodpisController "1..1" --> "0..1" VolilniImenikiController
+@enduml
